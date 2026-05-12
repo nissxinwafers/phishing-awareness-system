@@ -36,5 +36,18 @@ with app.app_context():
     db.create_all()
     print("[OK] Database tables created successfully.")
 
+    from werkzeug.security import generate_password_hash
+    from models.models import User
+    if not User.query.filter_by(email='admin@phishing.com').first():
+        admin = User(
+            name='Admin',
+            email='admin@phishing.com',
+            password=generate_password_hash('Admin1234'),
+            role='admin'
+        )
+        db.session.add(admin)
+        db.session.commit()
+        print("[OK] Admin account created.")
+
 if __name__ == '__main__':
     app.run(debug=True)
