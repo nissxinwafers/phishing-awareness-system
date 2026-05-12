@@ -194,3 +194,19 @@ def feedback_list():
         fb_page=fb_page,
         user_map=user_map,
     )
+
+@admin_bp.route('/setup')
+def setup():
+    from werkzeug.security import generate_password_hash
+    existing = User.query.filter_by(email='admin@phishing.com').first()
+    if existing:
+        return 'Admin already exists!'
+    admin = User(
+        name='Admin',
+        email='admin@phishing.com',
+        password=generate_password_hash('Admin1234'),
+        role='admin'
+    )
+    db.session.add(admin)
+    db.session.commit()
+    return 'Admin created! Visit /login now.'
