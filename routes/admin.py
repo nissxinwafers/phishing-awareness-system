@@ -210,9 +210,3 @@ def setup():
     db.session.add(admin)
     db.session.commit()
     return 'Admin created! Visit /login now.'
-
-# Public email preview — no login required (for demo purposes)
-@admin_bp.route('/templates/<int:template_id>/preview')
-def template_preview(template_id):
-    t = PhishingTemplate.query.get_or_404(template_id)
-    return render_template('admin/template_view.html', t=t)
