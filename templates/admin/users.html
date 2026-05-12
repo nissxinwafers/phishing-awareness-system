@@ -1,0 +1,111 @@
+{% extends 'base.html' %}
+{% block title %}Manage Users — PhishGuard Admin{% endblock %}
+
+{% block content %}
+
+<div class="d-flex align-items-center justify-content-between mb-4 flex-wrap gap-2">
+  <div>
+    <h4 class="fw-bold mb-0">Manage Users</h4>
+    <p class="text-muted small mb-0">{{ users_page.total }} registered account{{ 's' if users_page.total != 1 }}</p>
+  </div>
+  <!-- Search -->
+  <form class="d-flex gap-2" method="GET" action="{{ url_for('admin.users') }}">
+    <div class="input-group" style="max-width:280px;">
+      <span class="input-group-text bg-light border-end-0">
+        <i class="bi bi-search text-muted"></i>
+      </span>
+      <input type="text" name="q" class="form-control border-start-0 ps-0"
+             placeholder="Search name or email…" value="{{ query }}" />
+    </div>
+    <button type="submit" class="btn btn-primary">Search</button>
+    {% if query %}
+    <a href="{{ url_for('admin.users') }}" class="btn btn-outline-secondary">Clear</a>
+    {% endif %}
+  </form>
+</div>
+
+<div class="card">
+  <div class="card-body p-0">
+    {% if users_page.items %}
+    <div class="table-responsive">
+      <table class="table table-hover align-middle mb-0">
+        <thead class="table-light">
+          <tr>
+            <th class="ps-4" style="width:40px;">#</th>
+            <th>Name</th>
+            <th>Email</th>
+            <th>Role</th>
+            <th>Scans</th>
+            <th>Joined</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for u in users_page.items %}
+          <tr>
+            <td class="ps-4 text-muted small">{{ u.id }}</td>
+            <td>
+              <div class="d-flex align-items-center gap-2">
+                <div class="rounded-circle bg-primary bg-opacity-10 d-flex align-items-center justify-content-center"
+                     style="width:34px; height:34px; flex-shrink:0;">
+                  <span class="fw-bold text-primary small">{{ u.name[0].upper() }}</span>
+                </div>
+                <span class="fw-semibold small">{{ u.name }}</span>
+              </div>
+            </td>
+            <td class="small text-muted">{{ u.email }}</td>
+            <td>
+              {% if u.role == 'admin' %}
+                <span class="badge bg-danger">Admin</span>
+              {% else %}
+                <span class="badge bg-primary">User</span>
+              {% endif %}
+            </td>
+            <td class="small fw-semibold">{{ scan_counts.get(u.id, 0) }}</td>
+            <td class="small text-muted text-nowrap">{{ u.created_at.strftime('%b %d, %Y') }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Pagination -->
+    {% if users_page.pages > 1 %}
+    <div class="d-flex justify-content-center py-3 border-top">
+      <nav><ul class="pagination pagination-sm mb-0">
+        <li class="page-item {% if not users_page.has_prev %}disabled{% endif %}">
+          <a class="page-link" href="{{ url_for('admin.users', page=users_page.prev_num, q=query) if users_page.has_prev else '#' }}">
+            <i class="bi bi-chevron-left"></i>
+          </a>
+        </li>
+        {% for p in users_page.iter_pages(left_edge=1,right_edge=1,left_current=2,right_current=2) %}
+          {% if p %}
+            <li class="page-item {% if p == users_page.page %}active{% endif %}">
+              <a class="page-link" href="{{ url_for('admin.users', page=p, q=query) }}">{{ p }}</a>
+            </li>
+          {% else %}
+            <li class="page-item disabled"><span class="page-link">…</span></li>
+          {% endif %}
+        {% endfor %}
+        <li class="page-item {% if not users_page.has_next %}disabled{% endif %}">
+          <a class="page-link" href="{{ url_for('admin.users', page=users_page.next_num, q=query) if users_page.has_next else '#' }}">
+            <i class="bi bi-chevron-right"></i>
+          </a>
+        </li>
+      </ul></nav>
+    </div>
+    {% endif %}
+
+    {% else %}
+    <div class="text-center py-5 text-muted">
+      <i class="bi bi-people fs-1 d-block mb-3 opacity-25"></i>
+      {% if query %}
+        No users found matching "<strong>{{ query }}</strong>".
+        <br><a href="{{ url_for('admin.users') }}" class="btn btn-sm btn-outline-secondary mt-2">Clear search</a>
+      {% else %}
+        No users registered yet.
+      {% endif %}
+    </div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

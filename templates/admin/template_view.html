@@ -1,0 +1,254 @@
+{% extends 'base.html' %}
+{% block title %}{{ t.title }} — Template Preview{% endblock %}
+
+{% block head %}
+<style>
+  /* Realistic email client wrapper */
+  .email-client {
+    border: 1px solid #dee2e6;
+    border-radius: 0.75rem;
+    overflow: hidden;
+    font-family: 'Segoe UI', Arial, sans-serif;
+    background: #fff;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+  }
+
+  .email-toolbar {
+    background: #f8f9fa;
+    border-bottom: 1px solid #dee2e6;
+    padding: 0.6rem 1rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+  .email-toolbar-dot {
+    width: 12px; height: 12px; border-radius: 50%;
+  }
+
+  .email-header-row {
+    display: flex;
+    padding: 0.5rem 1.5rem;
+    font-size: 0.88rem;
+    border-bottom: 1px solid #f0f0f0;
+    align-items: baseline;
+    gap: 0.5rem;
+  }
+  .email-header-label { color: #6c757d; min-width: 60px; font-size: 0.8rem; }
+
+  .email-subject-bar {
+    padding: 0.9rem 1.5rem;
+    border-bottom: 1px solid #dee2e6;
+    background: #fff;
+  }
+  .email-subject-bar h5 { font-size: 1.05rem; font-weight: 700; margin: 0; }
+
+  .email-body {
+    padding: 1.75rem 1.5rem;
+    font-size: 0.9rem;
+    line-height: 1.7;
+    min-height: 200px;
+    white-space: pre-wrap;
+    color: #212529;
+  }
+
+  .email-fake-link {
+    display: inline-block;
+    margin: 1rem 0;
+    background: #0d6efd;
+    color: #fff !important;
+    padding: 0.6rem 1.4rem;
+    border-radius: 0.3rem;
+    text-decoration: none !important;
+    font-weight: 600;
+    font-size: 0.9rem;
+  }
+  .email-fake-link:hover { background: #0b5ed7; }
+
+  .email-footer {
+    background: #f8f9fa;
+    border-top: 1px solid #dee2e6;
+    padding: 0.75rem 1.5rem;
+    font-size: 0.75rem;
+    color: #6c757d;
+  }
+
+  /* Red flag callout badges */
+  .phish-flag {
+    display: inline-flex; align-items: center; gap: 0.4rem;
+    background: #fff5f5; border: 1px solid #fecaca;
+    border-radius: 50px; padding: 0.25rem 0.75rem;
+    font-size: 0.75rem; color: #dc3545; font-weight: 600;
+    margin: 0.2rem;
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+
+<div class="d-flex align-items-center gap-2 mb-4 flex-wrap">
+  <a href="{{ url_for('admin.templates') }}" class="btn btn-sm btn-outline-secondary">
+    <i class="bi bi-arrow-left me-1"></i>All Templates
+  </a>
+  <a href="{{ url_for('admin.template_create') }}" class="btn btn-sm btn-outline-primary">
+    <i class="bi bi-plus-lg me-1"></i>New Template
+  </a>
+  <form action="{{ url_for('admin.template_delete', template_id=t.id) }}" method="POST"
+        class="ms-auto" onsubmit="return confirm('Delete this template?');">
+    <button type="submit" class="btn btn-sm btn-outline-danger">
+      <i class="bi bi-trash me-1"></i>Delete
+    </button>
+  </form>
+</div>
+
+<div class="row g-3">
+
+  <!-- Email preview -->
+  <div class="col-lg-8">
+    <div class="mb-2 d-flex align-items-center gap-2">
+      <h5 class="fw-bold mb-0">{{ t.title }}</h5>
+      <span class="badge bg-danger">Phishing Simulation</span>
+    </div>
+    <p class="text-muted small mb-3">
+      Created {{ t.created_at.strftime('%B %d, %Y at %H:%M') }}
+    </p>
+
+    <!-- Simulated email client -->
+    <div class="email-client">
+      <!-- Traffic-light toolbar -->
+      <div class="email-toolbar">
+        <div class="email-toolbar-dot" style="background:#ff5f57;"></div>
+        <div class="email-toolbar-dot" style="background:#febc2e;"></div>
+        <div class="email-toolbar-dot" style="background:#28c840;"></div>
+        <span class="ms-3 text-muted small">Email Preview — Simulated Inbox</span>
+      </div>
+
+      <!-- Headers -->
+      <div class="email-header-row">
+        <span class="email-header-label">From</span>
+        <div>
+          <strong>{{ t.sender_name }}</strong>
+          <span class="text-danger ms-1 small">&lt;security@{{ t.sender_name | lower | replace(' ','-') }}-alert.com&gt;</span>
+          <span class="badge bg-danger ms-2" style="font-size:0.65rem;">UNVERIFIED SENDER</span>
+        </div>
+      </div>
+      <div class="email-header-row">
+        <span class="email-header-label">To</span>
+        <span>victim@example.com</span>
+      </div>
+      <div class="email-header-row">
+        <span class="email-header-label">Date</span>
+        <span class="text-muted">{{ t.created_at.strftime('%A, %B %d, %Y at %I:%M %p') }}</span>
+      </div>
+
+      <!-- Subject -->
+      <div class="email-subject-bar">
+        <h5>{{ t.subject }}</h5>
+      </div>
+
+      <!-- Body -->
+      <div class="email-body">{{ t.body }}
+{% if t.fake_url %}
+
+<a href="#" class="email-fake-link" onclick="return false;" title="Fake URL: {{ t.fake_url }}">
+  Click Here to Verify Your Account →
+</a>
+
+<div style="font-size:0.75rem; color:#6c757d; margin-top:0.5rem;">
+  🔗 Destination: <span style="color:#dc3545;">{{ t.fake_url }}</span>
+</div>
+{% endif %}
+      </div>
+
+      <!-- Footer -->
+      <div class="email-footer">
+        This message was sent to victim@example.com. &copy; {{ t.created_at.year }} {{ t.sender_name }}.
+        &nbsp;|&nbsp; <a href="#" onclick="return false;" style="color:#6c757d;">Unsubscribe</a>
+        &nbsp;|&nbsp; <a href="#" onclick="return false;" style="color:#6c757d;">Privacy Policy</a>
+      </div>
+    </div>
+  </div>
+
+  <!-- Sidebar: red flags + metadata -->
+  <div class="col-lg-4 d-flex flex-column gap-3">
+
+    <!-- Red flags auto-detected -->
+    <div class="card border-danger border-2">
+      <div class="card-header d-flex align-items-center gap-2 text-danger">
+        <i class="bi bi-flag-fill"></i>
+        Phishing Red Flags
+      </div>
+      <div class="card-body">
+        <div>
+          <span class="phish-flag"><i class="bi bi-x-circle-fill"></i> Unverified sender domain</span>
+          <span class="phish-flag"><i class="bi bi-x-circle-fill"></i> Creates urgency / fear</span>
+          {% if t.fake_url %}
+            <span class="phish-flag"><i class="bi bi-x-circle-fill"></i> Fake URL embedded</span>
+            {% if 'secure' in t.fake_url or 'verify' in t.fake_url or 'login' in t.fake_url %}
+            <span class="phish-flag"><i class="bi bi-x-circle-fill"></i> Suspicious URL keywords</span>
+            {% endif %}
+          {% endif %}
+          {% if 'verify' in t.body|lower or 'confirm' in t.body|lower %}
+          <span class="phish-flag"><i class="bi bi-x-circle-fill"></i> Requests verification</span>
+          {% endif %}
+          {% if 'password' in t.body|lower or 'credential' in t.body|lower %}
+          <span class="phish-flag"><i class="bi bi-x-circle-fill"></i> Requests credentials</span>
+          {% endif %}
+          {% if 'urgent' in t.body|lower or 'immediately' in t.body|lower or 'suspend' in t.body|lower %}
+          <span class="phish-flag"><i class="bi bi-x-circle-fill"></i> Urgency language detected</span>
+          {% endif %}
+        </div>
+        <p class="text-muted small mt-3 mb-0">
+          These are the indicators a trained user should notice before clicking any link.
+        </p>
+      </div>
+    </div>
+
+    <!-- Template metadata -->
+    <div class="card">
+      <div class="card-header d-flex align-items-center gap-2">
+        <i class="bi bi-info-circle text-primary"></i>
+        Template Info
+      </div>
+      <div class="card-body p-0">
+        <table class="table table-sm mb-0">
+          <tbody>
+            <tr>
+              <th class="ps-3 text-muted fw-normal small" style="width:40%;">Title</th>
+              <td class="small pe-3">{{ t.title }}</td>
+            </tr>
+            <tr>
+              <th class="ps-3 text-muted fw-normal small">Sender</th>
+              <td class="small pe-3">{{ t.sender_name }}</td>
+            </tr>
+            <tr>
+              <th class="ps-3 text-muted fw-normal small">Fake URL</th>
+              <td class="small pe-3 text-danger font-monospace">
+                {{ t.fake_url if t.fake_url else '—' }}
+              </td>
+            </tr>
+            <tr>
+              <th class="ps-3 text-muted fw-normal small">Created</th>
+              <td class="small pe-3">{{ t.created_at.strftime('%b %d, %Y') }}</td>
+            </tr>
+            <tr>
+              <th class="ps-3 text-muted fw-normal small">Body length</th>
+              <td class="small pe-3">{{ t.body | length }} chars</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Quick actions -->
+    <div class="d-flex flex-column gap-2">
+      <a href="{{ url_for('admin.template_create') }}" class="btn btn-primary">
+        <i class="bi bi-plus-lg me-2"></i>Create Another Template
+      </a>
+      <a href="{{ url_for('admin.templates') }}" class="btn btn-outline-secondary">
+        <i class="bi bi-list me-2"></i>All Templates
+      </a>
+    </div>
+
+  </div>
+</div>
+{% endblock %}

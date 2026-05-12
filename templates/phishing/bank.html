@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>NexaBank — Secure Online Banking</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" />
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet" />
+  <style>
+    body { background: #f4f6f9; font-family: 'Segoe UI', sans-serif; }
+
+    /* ── Disclaimer banner ── */
+    .disclaimer-banner {
+      background: #fff3cd;
+      border-bottom: 3px solid #ffc107;
+      padding: 0.6rem 1rem;
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: #664d03;
+      text-align: center;
+      position: sticky;
+      top: 0;
+      z-index: 9999;
+    }
+    .disclaimer-banner i { color: #ffc107; }
+
+    /* ── Bank navbar ── */
+    .bank-nav {
+      background: #003366;
+      padding: 0.75rem 2rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .bank-logo { color: #fff; font-size: 1.4rem; font-weight: 800; letter-spacing: -0.5px; }
+    .bank-logo span { color: #f0a500; }
+    .bank-nav-links a { color: rgba(255,255,255,0.75); text-decoration: none; font-size: 0.85rem; margin-left: 1.5rem; }
+    .bank-nav-links a:hover { color: #fff; }
+
+    /* ── Hero strip ── */
+    .bank-hero {
+      background: linear-gradient(135deg, #003366 0%, #005599 100%);
+      color: #fff;
+      padding: 1.25rem 2rem;
+      font-size: 0.85rem;
+      display: flex;
+      align-items: center;
+      gap: 2rem;
+    }
+    .bank-hero i { font-size: 1.1rem; opacity: 0.8; }
+
+    /* ── Login card ── */
+    .login-card {
+      max-width: 420px;
+      margin: 2.5rem auto;
+      background: #fff;
+      border-radius: 0.5rem;
+      box-shadow: 0 4px 24px rgba(0,0,0,0.09);
+      overflow: hidden;
+    }
+    .login-card-header {
+      background: #003366;
+      color: #fff;
+      padding: 1.25rem 1.75rem;
+      font-size: 1rem;
+      font-weight: 600;
+    }
+    .login-card-body { padding: 1.75rem; }
+
+    .form-control:focus { border-color: #003366; box-shadow: 0 0 0 0.2rem rgba(0,51,102,0.15); }
+
+    .btn-bank {
+      background: #003366;
+      color: #fff;
+      border: none;
+      padding: 0.65rem;
+      font-weight: 600;
+      border-radius: 0.3rem;
+      width: 100%;
+    }
+    .btn-bank:hover { background: #002244; color: #fff; }
+
+    .security-badges {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 1rem;
+      margin-top: 1.25rem;
+      padding-top: 1rem;
+      border-top: 1px solid #e9ecef;
+    }
+    .security-badge { font-size: 0.72rem; color: #6c757d; text-align: center; }
+    .security-badge i { display: block; font-size: 1.4rem; color: #198754; margin-bottom: 2px; }
+
+    .bank-footer {
+      background: #003366;
+      color: rgba(255,255,255,0.6);
+      font-size: 0.75rem;
+      text-align: center;
+      padding: 1.25rem;
+      margin-top: 3rem;
+    }
+    .bank-footer a { color: rgba(255,255,255,0.6); text-decoration: none; margin: 0 0.5rem; }
+    .bank-footer a:hover { color: #fff; }
+  </style>
+</head>
+<body>
+
+  <!-- ══ DISCLAIMER — always visible ══ -->
+  <div class="disclaimer-banner">
+    <i class="bi bi-exclamation-triangle-fill me-2"></i>
+    EDUCATIONAL SIMULATION ONLY — This is a <strong>fake phishing page</strong> created for cybersecurity awareness training. No data is collected or transmitted.
+    <a href="{{ url_for('user.phishing_caught', source='bank') }}" class="ms-3 btn btn-sm btn-warning py-0 px-2" style="font-size:0.78rem;">
+      Exit simulation
+    </a>
+  </div>
+
+  <!-- ══ Fake bank navbar ══ -->
+  <div class="bank-nav">
+    <div class="bank-logo">Nexa<span>Bank</span></div>
+    <div class="bank-nav-links">
+      <a href="#">Personal</a>
+      <a href="#">Business</a>
+      <a href="#">Investments</a>
+      <a href="#">Help</a>
+    </div>
+  </div>
+
+  <!-- ══ Security strip ══ -->
+  <div class="bank-hero">
+    <span><i class="bi bi-shield-lock-fill me-1"></i> 256-bit SSL Encryption</span>
+    <span><i class="bi bi-patch-check-fill me-1"></i> FDIC Insured</span>
+    <span><i class="bi bi-telephone-fill me-1"></i> 24/7 Support: 1-800-NEXABANK</span>
+  </div>
+
+  <!-- ══ Login form ══ -->
+  <div class="login-card">
+    <div class="login-card-header">
+      <i class="bi bi-lock-fill me-2"></i>Online Banking Sign In
+    </div>
+    <div class="login-card-body">
+      <p class="text-muted small mb-4">
+        Enter your credentials to access your NexaBank account securely.
+      </p>
+
+      <form action="{{ url_for('user.phishing_bank') }}" method="POST">
+
+        <div class="mb-3">
+          <label class="form-label fw-semibold small">Online Banking ID</label>
+          <input
+            type="email"
+            name="email"
+            class="form-control"
+            placeholder="email@example.com"
+            autocomplete="off"
+          />
+        </div>
+
+        <div class="mb-4">
+          <div class="d-flex justify-content-between">
+            <label class="form-label fw-semibold small">Password</label>
+            <a href="#" class="small text-decoration-none" style="color:#003366;">Forgot password?</a>
+          </div>
+          <input
+            type="password"
+            name="password"
+            class="form-control"
+            placeholder="Enter your password"
+            autocomplete="off"
+          />
+        </div>
+
+        <div class="form-check mb-3">
+          <input class="form-check-input" type="checkbox" id="remember" />
+          <label class="form-check-label small" for="remember">Remember this device</label>
+        </div>
+
+        <button type="submit" class="btn-bank">
+          Sign In Securely <i class="bi bi-arrow-right ms-1"></i>
+        </button>
+      </form>
+
+      <!-- Fake security badges -->
+      <div class="security-badges">
+        <div class="security-badge">
+          <i class="bi bi-shield-fill-check"></i>
+          Secure Login
+        </div>
+        <div class="security-badge">
+          <i class="bi bi-lock-fill"></i>
+          SSL Protected
+        </div>
+        <div class="security-badge">
+          <i class="bi bi-patch-check-fill"></i>
+          Verified Site
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ══ Footer ══ -->
+  <div class="bank-footer">
+    <div class="mb-1">
+      <a href="#">Privacy Policy</a>
+      <a href="#">Terms of Use</a>
+      <a href="#">Security Center</a>
+      <a href="#">Accessibility</a>
+    </div>
+    &copy; 2024 NexaBank, N.A. Member FDIC. All rights reserved.
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

@@ -1,0 +1,97 @@
+{% extends 'base.html' %}
+{% block title %}All Feedback — PhishGuard Admin{% endblock %}
+
+{% block content %}
+
+<div class="mb-4">
+  <h4 class="fw-bold mb-0">All Feedback</h4>
+  <p class="text-muted small mb-0">{{ fb_page.total }} submission{{ 's' if fb_page.total != 1 }}</p>
+</div>
+
+<!-- Rating summary -->
+{% if fb_page.total > 0 %}
+{% set all_ratings = fb_page.items | map(attribute='rating') | list %}
+<div class="row g-3 mb-4">
+  {% for star in range(5, 0, -1) %}
+    {% set count = fb_page.items | selectattr('rating', 'equalto', star) | list | length %}
+  <div class="col">
+    <div class="card text-center py-2">
+      <div class="fs-4 fw-bold {% if star >= 4 %}text-success{% elif star == 3 %}text-warning{% else %}text-danger{% endif %}">
+        {{ '★' * star }}
+      </div>
+      <div class="text-muted small">{{ count }} review{{ 's' if count != 1 }}</div>
+    </div>
+  </div>
+  {% endfor %}
+</div>
+{% endif %}
+
+<!-- Feedback cards -->
+{% if fb_page.items %}
+<div class="row g-3">
+  {% for fb in fb_page.items %}
+  <div class="col-md-6 col-xl-4">
+    <div class="card h-100">
+      <div class="card-body">
+        <div class="d-flex align-items-center justify-content-between mb-2">
+          <div class="d-flex align-items-center gap-2">
+            <div class="rounded-circle bg-primary bg-opacity-10 d-flex align-items-center justify-content-center"
+                 style="width:34px; height:34px; flex-shrink:0;">
+              <span class="fw-bold text-primary small">
+                {{ user_map.get(fb.user_id, 'A')[0].upper() }}
+              </span>
+            </div>
+            <span class="fw-semibold small">{{ user_map.get(fb.user_id, 'Anonymous') }}</span>
+          </div>
+          <span class="{% if fb.rating >= 4 %}text-success{% elif fb.rating == 3 %}text-warning{% else %}text-danger{% endif %}">
+            {% for _ in range(fb.rating) %}★{% endfor %}{% for _ in range(5 - fb.rating) %}<span class="text-muted">★</span>{% endfor %}
+          </span>
+        </div>
+        <p class="small text-muted mb-0" style="white-space:pre-line; min-height:60px;">{{ fb.message }}</p>
+      </div>
+      <div class="card-footer bg-transparent border-top py-2">
+        <span class="text-muted" style="font-size:0.75rem;">
+          <i class="bi bi-clock me-1"></i>{{ fb.created_at.strftime('%b %d, %Y at %H:%M') }}
+        </span>
+      </div>
+    </div>
+  </div>
+  {% endfor %}
+</div>
+
+<!-- Pagination -->
+{% if fb_page.pages > 1 %}
+<div class="d-flex justify-content-center mt-4">
+  <nav><ul class="pagination pagination-sm mb-0">
+    <li class="page-item {% if not fb_page.has_prev %}disabled{% endif %}">
+      <a class="page-link" href="{{ url_for('admin.feedback_list', page=fb_page.prev_num) if fb_page.has_prev else '#' }}">
+        <i class="bi bi-chevron-left"></i>
+      </a>
+    </li>
+    {% for p in fb_page.iter_pages(left_edge=1,right_edge=1,left_current=2,right_current=2) %}
+      {% if p %}
+        <li class="page-item {% if p == fb_page.page %}active{% endif %}">
+          <a class="page-link" href="{{ url_for('admin.feedback_list', page=p) }}">{{ p }}</a>
+        </li>
+      {% else %}
+        <li class="page-item disabled"><span class="page-link">…</span></li>
+      {% endif %}
+    {% endfor %}
+    <li class="page-item {% if not fb_page.has_next %}disabled{% endif %}">
+      <a class="page-link" href="{{ url_for('admin.feedback_list', page=fb_page.next_num) if fb_page.has_next else '#' }}">
+        <i class="bi bi-chevron-right"></i>
+      </a>
+    </li>
+  </ul></nav>
+</div>
+{% endif %}
+
+{% else %}
+<div class="card">
+  <div class="text-center py-5 text-muted">
+    <i class="bi bi-chat-dots fs-1 d-block mb-3 opacity-25"></i>
+    No feedback submitted yet.
+  </div>
+</div>
+{% endif %}
+{% endblock %}

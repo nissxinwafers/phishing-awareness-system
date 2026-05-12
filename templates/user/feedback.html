@@ -1,0 +1,122 @@
+{% extends 'base.html' %}
+{% block title %}Feedback — PhishGuard{% endblock %}
+
+{% block content %}
+
+<div class="mb-4">
+  <h4 class="fw-bold mb-0">Leave Feedback</h4>
+  <p class="text-muted small mb-0">Help us improve PhishGuard by sharing your experience.</p>
+</div>
+
+<div class="row justify-content-center">
+  <div class="col-lg-6">
+    <div class="card shadow-sm">
+      <div class="card-header d-flex align-items-center gap-2">
+        <i class="bi bi-chat-dots text-primary"></i>
+        Share your thoughts
+      </div>
+      <div class="card-body p-4">
+        <form action="{{ url_for('user.feedback') }}" method="POST">
+
+          <!-- Star rating -->
+          <div class="mb-4">
+            <label class="form-label fw-semibold">How would you rate your experience?</label>
+            <div class="d-flex gap-2" id="starRating">
+              {% for i in range(1, 6) %}
+              <label class="star-label" for="star{{ i }}" title="{{ i }} star{{ 's' if i > 1 }}">
+                <input
+                  type="radio"
+                  name="rating"
+                  id="star{{ i }}"
+                  value="{{ i }}"
+                  class="visually-hidden"
+                  required
+                />
+                <i class="bi bi-star fs-2 star-icon" data-value="{{ i }}"></i>
+              </label>
+              {% endfor %}
+            </div>
+            <div id="ratingLabel" class="form-text mt-1">&nbsp;</div>
+          </div>
+
+          <!-- Message -->
+          <div class="mb-4">
+            <label for="message" class="form-label fw-semibold">Your message</label>
+            <textarea
+              id="message"
+              name="message"
+              class="form-control"
+              rows="5"
+              placeholder="Tell us what you liked, what could be improved, or report any issues…"
+              required
+              maxlength="1000"
+            >{{ request.form.get('message', '') }}</textarea>
+            <div class="d-flex justify-content-end">
+              <small id="charCount" class="text-muted">0 / 1000</small>
+            </div>
+          </div>
+
+          <div class="d-grid">
+            <button type="submit" class="btn btn-primary py-2">
+              <i class="bi bi-send me-2"></i>Submit Feedback
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<style>
+  .star-label { cursor: pointer; }
+  .star-icon  { color: #dee2e6; transition: color 0.15s; }
+  .star-icon.active,
+  .star-icon.hover { color: #ffc107; }
+</style>
+
+<script>
+  const icons  = document.querySelectorAll('.star-icon');
+  const labels = ['', 'Poor', 'Fair', 'Good', 'Very good', 'Excellent'];
+  const ratingLabel = document.getElementById('ratingLabel');
+
+  function setStars(upTo, cls) {
+    icons.forEach((icon, i) => {
+      icon.classList.toggle(cls, i < upTo);
+    });
+  }
+
+  icons.forEach(icon => {
+    const val = parseInt(icon.dataset.value);
+
+    icon.parentElement.addEventListener('mouseenter', () => {
+      setStars(val, 'hover');
+      ratingLabel.textContent = labels[val];
+    });
+
+    icon.parentElement.addEventListener('mouseleave', () => {
+      icons.forEach(i => i.classList.remove('hover'));
+      const checked = document.querySelector('input[name="rating"]:checked');
+      ratingLabel.textContent = checked ? labels[parseInt(checked.value)] : '';
+    });
+
+    icon.parentElement.addEventListener('click', () => {
+      document.getElementById('star' + val).checked = true;
+      icons.forEach(i => i.classList.remove('active'));
+      setStars(val, 'active');
+      ratingLabel.textContent = labels[val];
+    });
+  });
+
+  // Character counter
+  const textarea  = document.getElementById('message');
+  const charCount = document.getElementById('charCount');
+
+  textarea.addEventListener('input', () => {
+    const len = textarea.value.length;
+    charCount.textContent = len + ' / 1000';
+    charCount.classList.toggle('text-danger', len >= 950);
+  });
+</script>
+{% endblock %}

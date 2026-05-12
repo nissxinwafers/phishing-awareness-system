@@ -1,0 +1,129 @@
+{% extends 'base.html' %}
+{% block title %}All Scans — PhishGuard Admin{% endblock %}
+
+{% block content %}
+
+<div class="d-flex align-items-center justify-content-between mb-4 flex-wrap gap-2">
+  <div>
+    <h4 class="fw-bold mb-0">All Scans</h4>
+    <p class="text-muted small mb-0">{{ scans_page.total }} scan{{ 's' if scans_page.total != 1 }} total</p>
+  </div>
+  <!-- Risk filter -->
+  <div class="d-flex gap-2 flex-wrap">
+    {% for label, val in [('All', ''), ('High Risk', 'High Risk'), ('Medium Risk', 'Medium Risk'), ('Low Risk', 'Low Risk')] %}
+    <a href="{{ url_for('admin.scans', risk=val) }}"
+       class="btn btn-sm {% if risk_filter == val %}btn-primary{% else %}btn-outline-secondary{% endif %}">
+      {{ label }}
+    </a>
+    {% endfor %}
+  </div>
+</div>
+
+<div class="card">
+  <div class="card-body p-0">
+    {% if scans_page.items %}
+    <div class="table-responsive">
+      <table class="table table-hover align-middle mb-0">
+        <thead class="table-light">
+          <tr>
+            <th class="ps-4" style="width:35%;">URL</th>
+            <th>Risk</th>
+            <th>Score</th>
+            <th>User</th>
+            <th>Date</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for scan in scans_page.items %}
+          <tr>
+            <td class="ps-4" style="max-width:260px;">
+              <div class="d-flex align-items-center gap-2">
+                {% if scan.result == 'High Risk' %}
+                  <i class="bi bi-shield-x text-danger flex-shrink-0"></i>
+                {% elif scan.result == 'Medium Risk' %}
+                  <i class="bi bi-shield-exclamation text-warning flex-shrink-0"></i>
+                {% else %}
+                  <i class="bi bi-shield-check text-success flex-shrink-0"></i>
+                {% endif %}
+                <span class="text-truncate small font-monospace" title="{{ scan.scanned_url }}">
+                  {{ scan.scanned_url }}
+                </span>
+              </div>
+            </td>
+            <td>
+              {% if scan.result == 'High Risk' %}<span class="badge bg-danger">High Risk</span>
+              {% elif scan.result == 'Medium Risk' %}<span class="badge bg-warning text-dark">Medium Risk</span>
+              {% else %}<span class="badge bg-success">Low Risk</span>{% endif %}
+            </td>
+            <td style="min-width:90px;">
+              <div class="d-flex align-items-center gap-2">
+                <span class="fw-semibold small
+                  {% if scan.score > 60 %}text-danger
+                  {% elif scan.score > 30 %}text-warning
+                  {% else %}text-success{% endif %}">{{ scan.score }}</span>
+                <div class="progress flex-grow-1" style="height:5px;">
+                  <div class="progress-bar
+                    {% if scan.score > 60 %}bg-danger
+                    {% elif scan.score > 30 %}bg-warning
+                    {% else %}bg-success{% endif %}"
+                    style="width:{{ scan.score }}%"></div>
+                </div>
+              </div>
+            </td>
+            <td class="small text-muted">{{ user_map.get(scan.user_id, '—') }}</td>
+            <td class="small text-muted text-nowrap">
+              {{ scan.created_at.strftime('%b %d, %Y') }}<br>
+              <span style="font-size:0.75rem;">{{ scan.created_at.strftime('%H:%M') }}</span>
+            </td>
+            <td>
+              <a href="{{ url_for('user.result', scan_id=scan.id) }}"
+                 class="btn btn-sm btn-outline-primary">View</a>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Pagination -->
+    {% if scans_page.pages > 1 %}
+    <div class="d-flex justify-content-center py-3 border-top">
+      <nav><ul class="pagination pagination-sm mb-0">
+        <li class="page-item {% if not scans_page.has_prev %}disabled{% endif %}">
+          <a class="page-link" href="{{ url_for('admin.scans', page=scans_page.prev_num, risk=risk_filter) if scans_page.has_prev else '#' }}">
+            <i class="bi bi-chevron-left"></i>
+          </a>
+        </li>
+        {% for p in scans_page.iter_pages(left_edge=1,right_edge=1,left_current=2,right_current=2) %}
+          {% if p %}
+            <li class="page-item {% if p == scans_page.page %}active{% endif %}">
+              <a class="page-link" href="{{ url_for('admin.scans', page=p, risk=risk_filter) }}">{{ p }}</a>
+            </li>
+          {% else %}
+            <li class="page-item disabled"><span class="page-link">…</span></li>
+          {% endif %}
+        {% endfor %}
+        <li class="page-item {% if not scans_page.has_next %}disabled{% endif %}">
+          <a class="page-link" href="{{ url_for('admin.scans', page=scans_page.next_num, risk=risk_filter) if scans_page.has_next else '#' }}">
+            <i class="bi bi-chevron-right"></i>
+          </a>
+        </li>
+      </ul></nav>
+    </div>
+    {% endif %}
+
+    {% else %}
+    <div class="text-center py-5 text-muted">
+      <i class="bi bi-inbox fs-1 d-block mb-3 opacity-25"></i>
+      {% if risk_filter %}
+        No {{ risk_filter }} scans found.
+        <br><a href="{{ url_for('admin.scans') }}" class="btn btn-sm btn-outline-secondary mt-2">Show all</a>
+      {% else %}
+        No scans recorded yet.
+      {% endif %}
+    </div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

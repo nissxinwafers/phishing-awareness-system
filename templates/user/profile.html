@@ -1,0 +1,116 @@
+{% extends 'base.html' %}
+{% block title %}My Profile — PhishGuard{% endblock %}
+
+{% block content %}
+
+<div class="mb-4">
+  <h4 class="fw-bold mb-0">My Profile</h4>
+  <p class="text-muted small mb-0">Your account details and activity summary.</p>
+</div>
+
+<div class="row g-3">
+
+  <!-- Profile card -->
+  <div class="col-lg-4">
+    <div class="card text-center">
+      <div class="card-body py-4">
+        <div class="mb-3">
+          <div class="rounded-circle bg-primary bg-opacity-10 d-inline-flex
+               align-items-center justify-content-center"
+               style="width:88px; height:88px;">
+            <i class="bi bi-person-fill fs-1 text-primary"></i>
+          </div>
+        </div>
+        <h5 class="fw-bold mb-0">{{ user.name }}</h5>
+        <p class="text-muted small mb-2">{{ user.email }}</p>
+
+        {% if user.role == 'admin' %}
+          <span class="badge bg-danger">Administrator</span>
+        {% else %}
+          <span class="badge bg-primary">Member</span>
+        {% endif %}
+
+        <hr />
+        <div class="text-muted small">
+          <i class="bi bi-calendar3 me-1"></i>
+          Joined {{ user.created_at.strftime('%B %d, %Y') }}
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Stats + info -->
+  <div class="col-lg-8">
+
+    <!-- Stats row -->
+    <div class="row g-3 mb-3">
+      <div class="col-6">
+        <div class="card text-center h-100">
+          <div class="card-body py-3">
+            <div class="fs-2 fw-bold text-primary">{{ total }}</div>
+            <div class="text-muted small">Total Scans</div>
+          </div>
+        </div>
+      </div>
+      <div class="col-6">
+        <div class="card text-center h-100">
+          <div class="card-body py-3">
+            <div class="fs-2 fw-bold text-danger">{{ high }}</div>
+            <div class="text-muted small">High Risk Detected</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Account details -->
+    <div class="card">
+      <div class="card-header d-flex align-items-center gap-2">
+        <i class="bi bi-person-badge text-primary"></i>
+        Account Details
+      </div>
+      <div class="card-body p-0">
+        <table class="table mb-0">
+          <tbody>
+            <tr>
+              <th class="ps-4 text-muted fw-normal small" style="width:35%;">Full name</th>
+              <td class="small">{{ user.name }}</td>
+            </tr>
+            <tr>
+              <th class="ps-4 text-muted fw-normal small">Email</th>
+              <td class="small">{{ user.email }}</td>
+            </tr>
+            <tr>
+              <th class="ps-4 text-muted fw-normal small">Role</th>
+              <td class="small">
+                {% if user.role == 'admin' %}
+                  <span class="badge bg-danger">Admin</span>
+                {% else %}
+                  <span class="badge bg-primary">User</span>
+                {% endif %}
+              </td>
+            </tr>
+            <tr>
+              <th class="ps-4 text-muted fw-normal small">Member since</th>
+              <td class="small">{{ user.created_at.strftime('%B %d, %Y') }}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Quick actions -->
+    <div class="d-flex gap-2 mt-3 flex-wrap">
+      <a href="{{ url_for('user.scanner') }}" class="btn btn-primary">
+        <i class="bi bi-search me-2"></i>Scan a URL
+      </a>
+      <a href="{{ url_for('user.history') }}" class="btn btn-outline-secondary">
+        <i class="bi bi-clock-history me-2"></i>View History
+      </a>
+      <a href="{{ url_for('user.feedback') }}" class="btn btn-outline-secondary">
+        <i class="bi bi-chat-dots me-2"></i>Leave Feedback
+      </a>
+    </div>
+
+  </div>
+</div>
+{% endblock %}

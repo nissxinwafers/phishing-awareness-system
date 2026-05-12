@@ -1,0 +1,211 @@
+{% extends 'base.html' %}
+{% block title %}Register — PhishGuard{% endblock %}
+
+{% block content %}
+<div class="d-flex align-items-center justify-content-center" style="min-height: calc(100vh - 100px);">
+  <div class="w-100" style="max-width: 480px;">
+
+    <!-- Logo / heading -->
+    <div class="text-center mb-4">
+      <div class="mb-3">
+        <span style="font-size: 3rem; color: #0d6efd;">
+          <i class="bi bi-shield-fill-check"></i>
+        </span>
+      </div>
+      <h2 class="fw-bold mb-1">Create your account</h2>
+      <p class="text-muted small">Join PhishGuard and stay protected online</p>
+    </div>
+
+    <!-- Card -->
+    <div class="card shadow-sm">
+      <div class="card-body p-4">
+        <form action="{{ url_for('auth.register') }}" method="POST" novalidate id="registerForm">
+
+          <!-- Full name -->
+          <div class="mb-3">
+            <label for="name" class="form-label fw-semibold">Full name</label>
+            <div class="input-group">
+              <span class="input-group-text bg-light border-end-0">
+                <i class="bi bi-person text-muted"></i>
+              </span>
+              <input
+                type="text"
+                id="name"
+                name="name"
+                class="form-control border-start-0 ps-0"
+                placeholder="John Doe"
+                value="{{ request.form.get('name', '') }}"
+                required
+                autofocus
+              />
+            </div>
+          </div>
+
+          <!-- Email -->
+          <div class="mb-3">
+            <label for="email" class="form-label fw-semibold">Email address</label>
+            <div class="input-group">
+              <span class="input-group-text bg-light border-end-0">
+                <i class="bi bi-envelope text-muted"></i>
+              </span>
+              <input
+                type="email"
+                id="email"
+                name="email"
+                class="form-control border-start-0 ps-0"
+                placeholder="you@example.com"
+                value="{{ request.form.get('email', '') }}"
+                required
+              />
+            </div>
+          </div>
+
+          <!-- Password -->
+          <div class="mb-3">
+            <label for="password" class="form-label fw-semibold">Password</label>
+            <div class="input-group">
+              <span class="input-group-text bg-light border-end-0">
+                <i class="bi bi-lock text-muted"></i>
+              </span>
+              <input
+                type="password"
+                id="password"
+                name="password"
+                class="form-control border-start-0 border-end-0 ps-0"
+                placeholder="At least 8 characters"
+                required
+                minlength="8"
+              />
+              <button
+                type="button"
+                class="input-group-text bg-light"
+                id="togglePassword"
+                title="Show / hide password"
+              >
+                <i class="bi bi-eye text-muted" id="eyeIcon"></i>
+              </button>
+            </div>
+            <!-- Strength bar -->
+            <div class="progress mt-2" style="height: 4px;">
+              <div
+                id="strengthBar"
+                class="progress-bar"
+                role="progressbar"
+                style="width: 0%; transition: width 0.3s, background-color 0.3s;"
+              ></div>
+            </div>
+            <small id="strengthLabel" class="text-muted"></small>
+          </div>
+
+          <!-- Confirm password -->
+          <div class="mb-4">
+            <label for="confirm_password" class="form-label fw-semibold">Confirm password</label>
+            <div class="input-group">
+              <span class="input-group-text bg-light border-end-0">
+                <i class="bi bi-lock-fill text-muted"></i>
+              </span>
+              <input
+                type="password"
+                id="confirm_password"
+                name="confirm_password"
+                class="form-control border-start-0 ps-0"
+                placeholder="Repeat your password"
+                required
+              />
+            </div>
+            <div id="matchMsg" class="form-text"></div>
+          </div>
+
+          <!-- Submit -->
+          <div class="d-grid mb-3">
+            <button type="submit" class="btn btn-primary py-2 fw-semibold" id="submitBtn">
+              <i class="bi bi-person-plus me-2"></i>Create account
+            </button>
+          </div>
+
+          <p class="text-center text-muted small mb-0">
+            By registering, you agree to use this platform responsibly.
+          </p>
+
+        </form>
+      </div>
+    </div>
+
+    <!-- Login link -->
+    <p class="text-center text-muted small mt-3">
+      Already have an account?
+      <a href="{{ url_for('auth.login') }}" class="text-primary fw-semibold text-decoration-none">
+        Sign in
+      </a>
+    </p>
+
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+  // ── Show / hide password ──────────────────────────────────────
+  const toggleBtn = document.getElementById('togglePassword');
+  const pwField   = document.getElementById('password');
+  const eyeIcon   = document.getElementById('eyeIcon');
+
+  toggleBtn.addEventListener('click', () => {
+    const show = pwField.type === 'password';
+    pwField.type      = show ? 'text' : 'password';
+    eyeIcon.className = show ? 'bi bi-eye-slash text-muted' : 'bi bi-eye text-muted';
+  });
+
+  // ── Password strength meter ───────────────────────────────────
+  const strengthBar   = document.getElementById('strengthBar');
+  const strengthLabel = document.getElementById('strengthLabel');
+
+  function getStrength(pw) {
+    let score = 0;
+    if (pw.length >= 8)  score++;
+    if (pw.length >= 12) score++;
+    if (/[A-Z]/.test(pw)) score++;
+    if (/[0-9]/.test(pw)) score++;
+    if (/[^A-Za-z0-9]/.test(pw)) score++;
+    return score;
+  }
+
+  pwField.addEventListener('input', () => {
+    const score = getStrength(pwField.value);
+    const pct   = (score / 5) * 100;
+    const colors = ['', '#dc3545', '#fd7e14', '#ffc107', '#20c997', '#198754'];
+    const labels = ['', 'Very weak', 'Weak', 'Fair', 'Good', 'Strong'];
+
+    strengthBar.style.width           = pct + '%';
+    strengthBar.style.backgroundColor = colors[score] || '';
+    strengthLabel.textContent         = pwField.value ? labels[score] : '';
+    strengthLabel.style.color         = colors[score] || '';
+
+    checkMatch();
+  });
+
+  // ── Password match indicator ──────────────────────────────────
+  const confirmField = document.getElementById('confirm_password');
+  const matchMsg     = document.getElementById('matchMsg');
+  const submitBtn    = document.getElementById('submitBtn');
+
+  function checkMatch() {
+    if (!confirmField.value) {
+      matchMsg.textContent = '';
+      submitBtn.disabled   = false;
+      return;
+    }
+    if (pwField.value === confirmField.value) {
+      matchMsg.textContent  = '✓ Passwords match';
+      matchMsg.style.color  = '#198754';
+      submitBtn.disabled    = false;
+    } else {
+      matchMsg.textContent  = '✗ Passwords do not match';
+      matchMsg.style.color  = '#dc3545';
+      submitBtn.disabled    = true;
+    }
+  }
+
+  confirmField.addEventListener('input', checkMatch);
+</script>
+{% endblock %}

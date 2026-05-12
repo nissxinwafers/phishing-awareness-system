@@ -1,0 +1,166 @@
+{% extends 'base.html' %}
+{% block title %}Create Template — PhishGuard Admin{% endblock %}
+
+{% block content %}
+
+<div class="d-flex align-items-center gap-2 mb-4">
+  <a href="{{ url_for('admin.templates') }}" class="btn btn-sm btn-outline-secondary">
+    <i class="bi bi-arrow-left me-1"></i>Back
+  </a>
+  <div>
+    <h4 class="fw-bold mb-0">Create Phishing Template</h4>
+    <p class="text-muted small mb-0">Design a simulated phishing email for awareness training.</p>
+  </div>
+</div>
+
+<div class="row g-3">
+  <div class="col-lg-7">
+    <div class="card">
+      <div class="card-header d-flex align-items-center gap-2">
+        <i class="bi bi-envelope-paper text-primary"></i>
+        Template Details
+      </div>
+      <div class="card-body p-4">
+        <form action="{{ url_for('admin.template_create') }}" method="POST" id="createForm">
+
+          <div class="mb-3">
+            <label class="form-label fw-semibold">Template Title <span class="text-danger">*</span></label>
+            <input type="text" name="title" class="form-control"
+                   placeholder="e.g. Fake Bank Security Alert"
+                   value="{{ request.form.get('title','') }}" required />
+            <div class="form-text">Internal label — not shown to the recipient.</div>
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label fw-semibold">Email Subject <span class="text-danger">*</span></label>
+            <input type="text" name="subject" class="form-control"
+                   placeholder="e.g. ⚠️ Urgent: Your account has been compromised"
+                   value="{{ request.form.get('subject','') }}" required />
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label fw-semibold">Sender Name <span class="text-danger">*</span></label>
+            <div class="input-group">
+              <input type="text" name="sender_name" class="form-control"
+                     placeholder="e.g. NexaBank Security Team"
+                     value="{{ request.form.get('sender_name','') }}" required />
+              <span class="input-group-text text-muted small">&lt;security@nexabank-alert.com&gt;</span>
+            </div>
+            <div class="form-text">The display name shown to recipients (the email address is fake).</div>
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label fw-semibold">Fake URL <span class="text-muted fw-normal">(optional)</span></label>
+            <div class="input-group">
+              <span class="input-group-text bg-light border-end-0">
+                <i class="bi bi-link-45deg text-danger"></i>
+              </span>
+              <input type="text" name="fake_url" class="form-control border-start-0"
+                     placeholder="e.g. https://nexabank-secure-login.com/verify"
+                     value="{{ request.form.get('fake_url','') }}" />
+            </div>
+            <div class="form-text">The deceptive link embedded in the email body.</div>
+          </div>
+
+          <div class="mb-4">
+            <label class="form-label fw-semibold">Email Body <span class="text-danger">*</span></label>
+            <textarea name="body" id="bodyField" class="form-control font-monospace"
+                      rows="12" placeholder="Write the email body here…"
+                      required>{{ request.form.get('body','') }}</textarea>
+            <div class="d-flex justify-content-end mt-1">
+              <small id="bodyCount" class="text-muted">0 characters</small>
+            </div>
+          </div>
+
+          <div class="d-flex gap-2">
+            <button type="submit" class="btn btn-primary">
+              <i class="bi bi-floppy me-2"></i>Save Template
+            </button>
+            <button type="button" class="btn btn-outline-secondary" id="previewToggle">
+              <i class="bi bi-eye me-2"></i>Live Preview
+            </button>
+            <a href="{{ url_for('admin.templates') }}" class="btn btn-outline-secondary ms-auto">
+              Cancel
+            </a>
+          </div>
+
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- Live email preview -->
+  <div class="col-lg-5" id="previewCol">
+    <div class="card" style="position:sticky; top:75px;">
+      <div class="card-header d-flex align-items-center gap-2">
+        <i class="bi bi-envelope-open text-primary"></i>
+        Live Email Preview
+      </div>
+      <div class="card-body p-0">
+        <!-- Email chrome -->
+        <div style="background:#f8f9fa; padding:1rem 1.25rem; border-bottom:1px solid #e9ecef; font-size:0.82rem;">
+          <div class="mb-1"><span class="text-muted" style="width:50px;display:inline-block;">From:</span>
+            <strong id="pv-sender">Sender Name</strong>
+            <span class="text-muted">&lt;noreply@phishing-example.com&gt;</span>
+          </div>
+          <div class="mb-1"><span class="text-muted" style="width:50px;display:inline-block;">To:</span>
+            victim@example.com
+          </div>
+          <div><span class="text-muted" style="width:50px;display:inline-block;">Subject:</span>
+            <strong id="pv-subject">Email Subject</strong>
+          </div>
+        </div>
+        <!-- Body -->
+        <div id="pv-body"
+             style="padding:1.25rem; font-size:0.85rem; min-height:200px; white-space:pre-wrap; line-height:1.6; max-height:420px; overflow-y:auto;">
+          <span class="text-muted">Email body will appear here…</span>
+        </div>
+        <!-- Fake URL -->
+        <div id="pv-url-wrap" style="display:none; padding:0.75rem 1.25rem; background:#fff5f5; border-top:1px solid #fecaca; font-size:0.8rem;">
+          <i class="bi bi-link-45deg text-danger me-1"></i>
+          <span class="text-muted">Embedded link: </span>
+          <span id="pv-url" class="text-danger font-monospace"></span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+  const senderInput  = document.querySelector('[name="sender_name"]');
+  const subjectInput = document.querySelector('[name="subject"]');
+  const bodyInput    = document.getElementById('bodyField');
+  const urlInput     = document.querySelector('[name="fake_url"]');
+  const bodyCount    = document.getElementById('bodyCount');
+
+  function updatePreview() {
+    document.getElementById('pv-sender').textContent  = senderInput.value  || 'Sender Name';
+    document.getElementById('pv-subject').textContent = subjectInput.value || 'Email Subject';
+
+    const bodyEl = document.getElementById('pv-body');
+    bodyEl.textContent = bodyInput.value || '';
+    if (!bodyInput.value) {
+      bodyEl.innerHTML = '<span class="text-muted">Email body will appear here…</span>';
+    }
+
+    const urlWrap = document.getElementById('pv-url-wrap');
+    const urlSpan = document.getElementById('pv-url');
+    if (urlInput.value.trim()) {
+      urlWrap.style.display = 'block';
+      urlSpan.textContent   = urlInput.value.trim();
+    } else {
+      urlWrap.style.display = 'none';
+    }
+
+    bodyCount.textContent = bodyInput.value.length + ' characters';
+  }
+
+  [senderInput, subjectInput, bodyInput, urlInput].forEach(el =>
+    el.addEventListener('input', updatePreview)
+  );
+  updatePreview();
+</script>
+{% endblock %}

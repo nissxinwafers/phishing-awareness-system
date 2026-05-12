@@ -1,0 +1,193 @@
+{% extends 'base.html' %}
+{% block title %}Phishing Simulation — You Were Caught!{% endblock %}
+
+{% block head %}
+<style>
+  .caught-hero {
+    background: linear-gradient(135deg, #dc3545 0%, #a71d2a 100%);
+    color: #fff;
+    border-radius: 0.75rem;
+    padding: 2.5rem 2rem;
+    text-align: center;
+    margin-bottom: 1.5rem;
+  }
+  .caught-icon { font-size: 4rem; opacity: 0.9; }
+
+  .red-flag-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.85rem;
+    padding: 0.9rem 1rem;
+    border-left: 4px solid #dc3545;
+    background: #fff5f5;
+    border-radius: 0 0.4rem 0.4rem 0;
+    margin-bottom: 0.65rem;
+  }
+  .red-flag-item i { color: #dc3545; margin-top: 2px; font-size: 1.05rem; flex-shrink: 0; }
+  .red-flag-item .flag-title { font-weight: 600; font-size: 0.9rem; }
+  .red-flag-item .flag-desc  { font-size: 0.82rem; color: #6c757d; }
+
+  .tip-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.85rem;
+    padding: 0.75rem 0;
+    border-bottom: 1px solid #e9ecef;
+  }
+  .tip-item:last-child { border-bottom: none; }
+  .tip-item i { color: #198754; margin-top: 2px; font-size: 1rem; flex-shrink: 0; }
+  .tip-item .tip-text { font-size: 0.88rem; }
+</style>
+{% endblock %}
+
+{% block content %}
+
+{% if source == 'bank' %}
+  {% set sim_name     = 'NexaBank — Fake Bank Login' %}
+  {% set sim_icon     = 'bi-bank' %}
+  {% set red_flags = [
+    ('Suspicious URL',
+     'The address bar showed <code>localhost/phishing/bank</code> — not a real bank domain like <code>nexabank.com</code>. Always verify the exact domain before entering any credentials.'),
+    ('No real HTTPS padlock',
+     'A real bank always uses a verified HTTPS certificate. A padlock icon alone is not proof — phishers can get free SSL certificates too. Check the full domain name.'),
+    ('Unsolicited login prompt',
+     'You were directed to this login page without initiating a banking session yourself. Legitimate banks never ask you to re-enter credentials via an unexpected link.'),
+    ('Generic branding',
+     '"NexaBank" is a fictional brand. Phishers often invent plausible-sounding names or slightly misspell real ones (e.g. <code>paypa1.com</code>, <code>arnazon.com</code>).'),
+    ('Fake security badges',
+     'The padlock icons and "SSL Protected / Verified Site" badges were purely decorative HTML — they do not prove anything. Real security is in the URL and certificate, not images.'),
+    ('Requesting sensitive data upfront',
+     'Real online banking uses multi-factor authentication across several steps. A single page asking for email + password is a red flag.')
+  ] %}
+{% else %}
+  {% set sim_name     = 'ConnectHub — Fake Social Media Login' %}
+  {% set sim_icon     = 'bi-people-fill' %}
+  {% set red_flags = [
+    ('Urgency / scare tactic',
+     'The "unusual activity — verify to avoid suspension" message is a classic social engineering trick. It pressures you to act fast without thinking. Legitimate platforms send account alerts through their own app, not a random login page.'),
+    ('Wrong URL',
+     'The address bar showed <code>localhost/phishing/social</code> instead of the real site\'s domain. Always read the full URL carefully, especially on mobile where it is often truncated.'),
+    ('Pixel-perfect clone',
+     'The page was designed to look exactly like a real social media login. Attackers use browser developer tools to copy genuine layouts. Visual similarity alone is not proof of legitimacy.'),
+    ('Disabled / broken links',
+     'The "Create new account" button was non-functional and footer links went nowhere. On a real platform every link works. Dead links indicate a hastily copied page.'),
+    ('No two-factor authentication step',
+     'Real social media platforms prompt for 2FA after a correct password. Skipping that step reveals the page has no real backend — it just harvests credentials.'),
+    ('Collected via an untrusted link',
+     'Phishing pages are almost always reached via a link in an email, DM, or ad — not by navigating to the site directly. If you did not type the address yourself, be suspicious.')
+  ] %}
+{% endif %}
+
+<!-- ── Hero ─────────────────────────────────────────────── -->
+<div class="caught-hero">
+  <div class="caught-icon mb-3">
+    <i class="bi bi-shield-x"></i>
+  </div>
+  <h2 class="fw-bold mb-2">You were phished!</h2>
+  <p class="mb-0 opacity-75" style="max-width:520px; margin:0 auto;">
+    You just submitted your credentials to a simulated phishing page
+    (<strong>{{ sim_name }}</strong>). In a real attack, your username and
+    password would now be in an attacker's hands.
+  </p>
+</div>
+
+<div class="row g-3">
+
+  <!-- Red flags -->
+  <div class="col-lg-7">
+    <div class="card">
+      <div class="card-header d-flex align-items-center gap-2">
+        <i class="bi bi-flag-fill text-danger"></i>
+        Red Flags You Should Have Spotted
+        <span class="badge bg-danger ms-auto">{{ red_flags | length }}</span>
+      </div>
+      <div class="card-body">
+        {% for title, desc in red_flags %}
+        <div class="red-flag-item">
+          <i class="bi bi-x-circle-fill"></i>
+          <div>
+            <div class="flag-title">{{ title }}</div>
+            <div class="flag-desc">{{ desc | safe }}</div>
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+
+  <!-- How to stay safe + actions -->
+  <div class="col-lg-5 d-flex flex-column gap-3">
+
+    <!-- Stay safe tips -->
+    <div class="card">
+      <div class="card-header d-flex align-items-center gap-2">
+        <i class="bi bi-shield-check text-success"></i>
+        How to Protect Yourself
+      </div>
+      <div class="card-body py-2">
+        <div class="tip-item">
+          <i class="bi bi-check-circle-fill"></i>
+          <span class="tip-text"><strong>Always check the URL</strong> — read the full domain before typing anything. Look for misspellings or extra subdomains.</span>
+        </div>
+        <div class="tip-item">
+          <i class="bi bi-check-circle-fill"></i>
+          <span class="tip-text"><strong>Use a password manager</strong> — it auto-fills only on the real domain, so it silently refuses phishing sites.</span>
+        </div>
+        <div class="tip-item">
+          <i class="bi bi-check-circle-fill"></i>
+          <span class="tip-text"><strong>Enable two-factor authentication</strong> — even if your password is stolen, attackers can't access your account without the second factor.</span>
+        </div>
+        <div class="tip-item">
+          <i class="bi bi-check-circle-fill"></i>
+          <span class="tip-text"><strong>Don't trust urgency</strong> — pressure to act immediately is the attacker's tool. Slow down and verify independently.</span>
+        </div>
+        <div class="tip-item">
+          <i class="bi bi-check-circle-fill"></i>
+          <span class="tip-text"><strong>Navigate directly</strong> — type the address yourself or use a bookmark instead of clicking links from emails or messages.</span>
+        </div>
+        <div class="tip-item">
+          <i class="bi bi-check-circle-fill"></i>
+          <span class="tip-text"><strong>Scan suspicious links first</strong> — use the PhishGuard URL Scanner before clicking any link you are uncertain about.</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- What to do if you've been phished -->
+    <div class="card border-warning border-2">
+      <div class="card-header d-flex align-items-center gap-2 text-warning">
+        <i class="bi bi-exclamation-triangle-fill"></i>
+        If This Were Real — Act Now
+      </div>
+      <div class="card-body small text-muted">
+        <ol class="mb-0 ps-3">
+          <li class="mb-1">Change your password on the real site <strong>immediately</strong>.</li>
+          <li class="mb-1">Change the same password everywhere else you used it.</li>
+          <li class="mb-1">Enable 2FA if you haven't already.</li>
+          <li class="mb-1">Check for unauthorised activity and report it to the platform.</li>
+          <li>Report the phishing URL to your browser and email provider.</li>
+        </ol>
+      </div>
+    </div>
+
+    <!-- Action buttons -->
+    <div class="d-flex flex-column gap-2">
+      {% if source == 'bank' %}
+        <a href="{{ url_for('user.phishing_social') }}" class="btn btn-outline-primary">
+          <i class="bi bi-people me-2"></i>Try the Social Media Simulation
+        </a>
+      {% else %}
+        <a href="{{ url_for('user.phishing_bank') }}" class="btn btn-outline-primary">
+          <i class="bi bi-bank me-2"></i>Try the Bank Login Simulation
+        </a>
+      {% endif %}
+      <a href="{{ url_for('user.scanner') }}" class="btn btn-primary">
+        <i class="bi bi-search me-2"></i>Scan a URL with PhishGuard
+      </a>
+      <a href="{{ url_for('user.dashboard') }}" class="btn btn-outline-secondary">
+        <i class="bi bi-speedometer2 me-2"></i>Back to Dashboard
+      </a>
+    </div>
+
+  </div>
+</div>
+{% endblock %}

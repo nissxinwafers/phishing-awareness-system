@@ -1,0 +1,275 @@
+{% extends 'base.html' %}
+{% block title %}URL Scanner — PhishGuard{% endblock %}
+
+{% block head %}
+<style>
+  /* ── Scan overlay ── */
+  #scanOverlay {
+    display: none;
+    position: fixed; inset: 0;
+    background: rgba(10, 15, 30, 0.82);
+    backdrop-filter: blur(4px);
+    z-index: 2000;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    color: #fff;
+  }
+  #scanOverlay.active { display: flex; }
+
+  .scan-shield {
+    font-size: 4rem;
+    animation: pulse-shield 1.4s ease-in-out infinite;
+    margin-bottom: 1.5rem;
+    color: #0d6efd;
+    filter: drop-shadow(0 0 16px rgba(13,110,253,0.6));
+  }
+  @keyframes pulse-shield {
+    0%, 100% { transform: scale(1);   opacity: 1; }
+    50%       { transform: scale(1.1); opacity: 0.8; }
+  }
+
+  .scan-step {
+    display: flex; align-items: center; gap: 0.75rem;
+    padding: 0.5rem 1rem;
+    border-radius: 0.5rem;
+    font-size: 0.9rem;
+    color: rgba(255,255,255,0.45);
+    transition: color 0.4s, background 0.4s;
+    min-width: 260px;
+  }
+  .scan-step.active {
+    color: #fff;
+    background: rgba(13,110,253,0.2);
+  }
+  .scan-step.done { color: #20c997; }
+  .scan-step i { width: 1.2rem; text-align: center; font-size: 1rem; }
+
+  .scan-progress {
+    width: 260px; height: 3px;
+    background: rgba(255,255,255,0.15);
+    border-radius: 2px; margin: 1.25rem 0;
+    overflow: hidden;
+  }
+  .scan-progress-bar {
+    height: 100%; width: 0%;
+    background: linear-gradient(90deg, #0d6efd, #20c997);
+    border-radius: 2px;
+    transition: width 0.5s ease;
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+
+<div class="mb-4">
+  <h4 class="fw-bold mb-0">URL Scanner</h4>
+  <p class="text-muted small mb-0">Check any URL for phishing indicators before you click it.</p>
+</div>
+
+<div class="row g-3 justify-content-center">
+  <div class="col-lg-7">
+
+    <!-- Scanner card -->
+    <div class="card shadow-sm">
+      <div class="card-header d-flex align-items-center gap-2">
+        <i class="bi bi-shield-shaded text-primary"></i>
+        Analyse a URL
+      </div>
+      <div class="card-body p-4">
+        <form action="{{ url_for('user.scanner') }}" method="POST" id="scanForm">
+          <div class="mb-4">
+            <label for="urlInput" class="form-label fw-semibold">URL to scan</label>
+            <div class="input-group input-group-lg">
+              <span class="input-group-text bg-light border-end-0">
+                <i class="bi bi-globe text-muted"></i>
+              </span>
+              <input
+                type="text"
+                id="urlInput"
+                name="url"
+                class="form-control border-start-0 ps-0"
+                placeholder="https://example.com/some/page"
+                autofocus
+                required
+              />
+            </div>
+            <div class="form-text">
+              You can paste with or without <code>https://</code> — we'll add it automatically.
+            </div>
+          </div>
+          <div class="d-grid">
+            <button type="submit" class="btn btn-primary btn-lg" id="submitBtn">
+              <i class="bi bi-search me-2"></i>Scan URL
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- How it works -->
+    <div class="card mt-3">
+      <div class="card-header d-flex align-items-center gap-2">
+        <i class="bi bi-info-circle text-primary"></i>
+        How the scanner works
+      </div>
+      <div class="card-body">
+        <div class="row g-3">
+          <div class="col-sm-6">
+            <div class="d-flex gap-3">
+              <div class="text-primary mt-1"><i class="bi bi-lock fs-5"></i></div>
+              <div>
+                <div class="fw-semibold small">HTTPS check</div>
+                <div class="text-muted small">Flags URLs that don't use a secure connection.</div>
+              </div>
+            </div>
+          </div>
+          <div class="col-sm-6">
+            <div class="d-flex gap-3">
+              <div class="text-primary mt-1"><i class="bi bi-hdd-network fs-5"></i></div>
+              <div>
+                <div class="fw-semibold small">IP address detection</div>
+                <div class="text-muted small">Raw IP addresses instead of domain names are a red flag.</div>
+              </div>
+            </div>
+          </div>
+          <div class="col-sm-6">
+            <div class="d-flex gap-3">
+              <div class="text-primary mt-1"><i class="bi bi-exclamation-diamond fs-5"></i></div>
+              <div>
+                <div class="fw-semibold small">Suspicious keywords</div>
+                <div class="text-muted small">Detects words like <em>login</em>, <em>verify</em>, <em>secure</em>.</div>
+              </div>
+            </div>
+          </div>
+          <div class="col-sm-6">
+            <div class="d-flex gap-3">
+              <div class="text-primary mt-1"><i class="bi bi-link fs-5"></i></div>
+              <div>
+                <div class="fw-semibold small">URL shorteners</div>
+                <div class="text-muted small">Short links that hide the real destination.</div>
+              </div>
+            </div>
+          </div>
+          <div class="col-sm-6">
+            <div class="d-flex gap-3">
+              <div class="text-primary mt-1"><i class="bi bi-diagram-3 fs-5"></i></div>
+              <div>
+                <div class="fw-semibold small">Subdomain depth</div>
+                <div class="text-muted small">Too many subdomains is a common phishing trick.</div>
+              </div>
+            </div>
+          </div>
+          <div class="col-sm-6">
+            <div class="d-flex gap-3">
+              <div class="text-primary mt-1"><i class="bi bi-rulers fs-5"></i></div>
+              <div>
+                <div class="fw-semibold small">URL length</div>
+                <div class="text-muted small">Unusually long URLs may be hiding their true purpose.</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Risk levels sidebar -->
+  <div class="col-lg-3">
+    <div class="card">
+      <div class="card-header d-flex align-items-center gap-2">
+        <i class="bi bi-bar-chart text-primary"></i>
+        Risk levels
+      </div>
+      <div class="card-body p-0">
+        <div class="list-group list-group-flush rounded-bottom">
+          <div class="list-group-item px-3 py-3">
+            <div class="d-flex align-items-center gap-2 mb-1">
+              <span class="badge bg-success">Low Risk</span>
+              <span class="ms-auto text-muted small">Score 0–30</span>
+            </div>
+            <div class="text-muted small">URL appears safe. No major indicators found.</div>
+          </div>
+          <div class="list-group-item px-3 py-3">
+            <div class="d-flex align-items-center gap-2 mb-1">
+              <span class="badge bg-warning text-dark">Medium Risk</span>
+              <span class="ms-auto text-muted small">Score 31–60</span>
+            </div>
+            <div class="text-muted small">Some suspicious patterns detected. Proceed with caution.</div>
+          </div>
+          <div class="list-group-item px-3 py-3">
+            <div class="d-flex align-items-center gap-2 mb-1">
+              <span class="badge bg-danger">High Risk</span>
+              <span class="ms-auto text-muted small">Score 61–100</span>
+            </div>
+            <div class="text-muted small">Multiple phishing indicators found. Avoid this URL.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- ══ Scan overlay ══ -->
+<div id="scanOverlay" role="status" aria-live="polite">
+  <i class="bi bi-shield-shaded scan-shield"></i>
+
+  <div class="fw-bold mb-1" style="font-size:1.15rem;">Analysing URL…</div>
+  <div class="text-white-50 small mb-3" id="overlayUrl" style="max-width:340px; word-break:break-all; text-align:center;"></div>
+
+  <div class="scan-progress">
+    <div class="scan-progress-bar" id="scanProgressBar"></div>
+  </div>
+
+  <div class="d-flex flex-column gap-1">
+    <div class="scan-step" id="step1"><i class="bi bi-globe"></i> Fetching URL structure</div>
+    <div class="scan-step" id="step2"><i class="bi bi-search"></i> Checking phishing indicators</div>
+    <div class="scan-step" id="step3"><i class="bi bi-calculator"></i> Calculating risk score</div>
+    <div class="scan-step" id="step4"><i class="bi bi-check-circle"></i> Preparing your report</div>
+  </div>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+  const form        = document.getElementById('scanForm');
+  const overlay     = document.getElementById('scanOverlay');
+  const progressBar = document.getElementById('scanProgressBar');
+  const overlayUrl  = document.getElementById('overlayUrl');
+  const steps       = [
+    document.getElementById('step1'),
+    document.getElementById('step2'),
+    document.getElementById('step3'),
+    document.getElementById('step4'),
+  ];
+
+  const STEP_TIMINGS = [0, 600, 1200, 1900]; // ms delay before activating each step
+  const STEP_WIDTHS  = ['20%', '50%', '80%', '100%'];
+
+  form.addEventListener('submit', function (e) {
+    const url = document.getElementById('urlInput').value.trim();
+    if (!url) return;
+
+    // Show overlay immediately
+    overlay.classList.add('active');
+    overlayUrl.textContent = url;
+
+    // Animate steps with staggered delays
+    steps.forEach((step, i) => {
+      setTimeout(() => {
+        // Mark previous step as done
+        if (i > 0) {
+          steps[i - 1].classList.remove('active');
+          steps[i - 1].classList.add('done');
+          steps[i - 1].querySelector('i').className = 'bi bi-check-circle-fill';
+        }
+        step.classList.add('active');
+        progressBar.style.width = STEP_WIDTHS[i];
+      }, STEP_TIMINGS[i]);
+    });
+  });
+</script>
+{% endblock %}

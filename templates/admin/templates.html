@@ -1,0 +1,104 @@
+{% extends 'base.html' %}
+{% block title %}Phishing Templates — PhishGuard Admin{% endblock %}
+
+{% block content %}
+
+<div class="d-flex align-items-center justify-content-between mb-4">
+  <div>
+    <h4 class="fw-bold mb-0">Phishing Templates</h4>
+    <p class="text-muted small mb-0">Create and manage simulated phishing email templates.</p>
+  </div>
+  <a href="{{ url_for('admin.template_create') }}" class="btn btn-primary">
+    <i class="bi bi-plus-lg me-2"></i>New Template
+  </a>
+</div>
+
+<div class="card">
+  <div class="card-body p-0">
+    {% if templates_page.items %}
+    <div class="table-responsive">
+      <table class="table table-hover align-middle mb-0">
+        <thead class="table-light">
+          <tr>
+            <th class="ps-4">Title</th>
+            <th>Subject</th>
+            <th>Sender</th>
+            <th>Fake URL</th>
+            <th>Created</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for t in templates_page.items %}
+          <tr>
+            <td class="ps-4 fw-semibold small">{{ t.title }}</td>
+            <td class="small text-muted" style="max-width:180px;">
+              <span class="text-truncate d-block" title="{{ t.subject }}">{{ t.subject }}</span>
+            </td>
+            <td class="small text-muted">{{ t.sender_name }}</td>
+            <td class="small" style="max-width:160px;">
+              {% if t.fake_url %}
+                <span class="text-truncate d-block text-danger font-monospace" title="{{ t.fake_url }}">{{ t.fake_url }}</span>
+              {% else %}
+                <span class="text-muted">—</span>
+              {% endif %}
+            </td>
+            <td class="small text-muted text-nowrap">{{ t.created_at.strftime('%b %d, %Y') }}</td>
+            <td class="text-end pe-3">
+              <a href="{{ url_for('admin.template_view', template_id=t.id) }}"
+                 class="btn btn-sm btn-outline-primary me-1">
+                <i class="bi bi-eye me-1"></i>Preview
+              </a>
+              <form action="{{ url_for('admin.template_delete', template_id=t.id) }}"
+                    method="POST" class="d-inline"
+                    onsubmit="return confirm('Delete template \'{{ t.title }}\'?');">
+                <button type="submit" class="btn btn-sm btn-outline-danger">
+                  <i class="bi bi-trash"></i>
+                </button>
+              </form>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Pagination -->
+    {% if templates_page.pages > 1 %}
+    <div class="d-flex justify-content-center py-3 border-top">
+      <nav><ul class="pagination pagination-sm mb-0">
+        <li class="page-item {% if not templates_page.has_prev %}disabled{% endif %}">
+          <a class="page-link" href="{{ url_for('admin.templates', page=templates_page.prev_num) if templates_page.has_prev else '#' }}">
+            <i class="bi bi-chevron-left"></i>
+          </a>
+        </li>
+        {% for p in templates_page.iter_pages(left_edge=1,right_edge=1,left_current=2,right_current=2) %}
+          {% if p %}
+            <li class="page-item {% if p == templates_page.page %}active{% endif %}">
+              <a class="page-link" href="{{ url_for('admin.templates', page=p) }}">{{ p }}</a>
+            </li>
+          {% else %}
+            <li class="page-item disabled"><span class="page-link">…</span></li>
+          {% endif %}
+        {% endfor %}
+        <li class="page-item {% if not templates_page.has_next %}disabled{% endif %}">
+          <a class="page-link" href="{{ url_for('admin.templates', page=templates_page.next_num) if templates_page.has_next else '#' }}">
+            <i class="bi bi-chevron-right"></i>
+          </a>
+        </li>
+      </ul></nav>
+    </div>
+    {% endif %}
+
+    {% else %}
+    <div class="text-center py-5 text-muted">
+      <i class="bi bi-envelope-paper fs-1 d-block mb-3 opacity-25"></i>
+      <p class="mb-3">No templates yet. Create the first one!</p>
+      <a href="{{ url_for('admin.template_create') }}" class="btn btn-primary">
+        <i class="bi bi-plus-lg me-2"></i>Create Template
+      </a>
+    </div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,217 @@
+{% extends 'base.html' %}
+{% block title %}Admin Dashboard — PhishGuard{% endblock %}
+
+{% block content %}
+
+<div class="d-flex align-items-center justify-content-between mb-4">
+  <div>
+    <h4 class="fw-bold mb-0">Admin Dashboard</h4>
+    <p class="text-muted small mb-0">System-wide overview</p>
+  </div>
+  <a href="{{ url_for('admin.template_create') }}" class="btn btn-primary">
+    <i class="bi bi-plus-lg me-2"></i>New Template
+  </a>
+</div>
+
+<!-- Stat cards -->
+<div class="row g-3 mb-4">
+  <div class="col-6 col-lg-3">
+    <div class="card h-100">
+      <div class="card-body d-flex align-items-center gap-3 py-3">
+        <div class="rounded-3 p-2 bg-primary bg-opacity-10">
+          <i class="bi bi-people-fill fs-4 text-primary"></i>
+        </div>
+        <div>
+          <div class="fs-3 fw-bold lh-1">{{ total_users }}</div>
+          <div class="text-muted small">Registered Users</div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="col-6 col-lg-3">
+    <div class="card h-100">
+      <div class="card-body d-flex align-items-center gap-3 py-3">
+        <div class="rounded-3 p-2 bg-info bg-opacity-10">
+          <i class="bi bi-link-45deg fs-4 text-info"></i>
+        </div>
+        <div>
+          <div class="fs-3 fw-bold lh-1">{{ total_scans }}</div>
+          <div class="text-muted small">Total Scans</div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="col-6 col-lg-3">
+    <div class="card h-100">
+      <div class="card-body d-flex align-items-center gap-3 py-3">
+        <div class="rounded-3 p-2 bg-danger bg-opacity-10">
+          <i class="bi bi-shield-exclamation fs-4 text-danger"></i>
+        </div>
+        <div>
+          <div class="fs-3 fw-bold lh-1 text-danger">{{ high_risk }}</div>
+          <div class="text-muted small">High Risk URLs</div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="col-6 col-lg-3">
+    <div class="card h-100">
+      <div class="card-body d-flex align-items-center gap-3 py-3">
+        <div class="rounded-3 p-2 bg-success bg-opacity-10">
+          <i class="bi bi-chat-dots-fill fs-4 text-success"></i>
+        </div>
+        <div>
+          <div class="fs-3 fw-bold lh-1">{{ total_feedback }}</div>
+          <div class="text-muted small">Feedback Submissions</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Risk distribution + template count -->
+<div class="row g-3 mb-4">
+  <div class="col-lg-8">
+    <div class="card h-100">
+      <div class="card-header d-flex align-items-center gap-2">
+        <i class="bi bi-bar-chart-line text-primary"></i>
+        Scan Risk Distribution
+      </div>
+      <div class="card-body">
+        {% if total_scans > 0 %}
+          {% set high_pct   = ((high_risk   / total_scans) * 100) | round(1) %}
+          {% set medium_pct = ((medium_risk / total_scans) * 100) | round(1) %}
+          {% set low_pct    = ((low_risk    / total_scans) * 100) | round(1) %}
+        {% else %}
+          {% set high_pct   = 0 %}
+          {% set medium_pct = 0 %}
+          {% set low_pct    = 0 %}
+        {% endif %}
+
+        <div class="mb-3">
+          <div class="d-flex justify-content-between small mb-1">
+            <span class="text-danger fw-semibold">High Risk</span>
+            <span>{{ high_risk }} scans ({{ high_pct }}%)</span>
+          </div>
+          <div class="progress" style="height:10px;">
+            <div class="progress-bar bg-danger" style="width:{{ high_pct }}%"></div>
+          </div>
+        </div>
+        <div class="mb-3">
+          <div class="d-flex justify-content-between small mb-1">
+            <span class="text-warning fw-semibold">Medium Risk</span>
+            <span>{{ medium_risk }} scans ({{ medium_pct }}%)</span>
+          </div>
+          <div class="progress" style="height:10px;">
+            <div class="progress-bar bg-warning" style="width:{{ medium_pct }}%"></div>
+          </div>
+        </div>
+        <div>
+          <div class="d-flex justify-content-between small mb-1">
+            <span class="text-success fw-semibold">Low Risk</span>
+            <span>{{ low_risk }} scans ({{ low_pct }}%)</span>
+          </div>
+          <div class="progress" style="height:10px;">
+            <div class="progress-bar bg-success" style="width:{{ low_pct }}%"></div>
+          </div>
+        </div>
+        {% if total_scans == 0 %}
+          <p class="text-muted small text-center mt-3 mb-0">No scans recorded yet.</p>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+  <div class="col-lg-4">
+    <div class="card h-100">
+      <div class="card-header d-flex align-items-center gap-2">
+        <i class="bi bi-envelope-paper text-primary"></i>
+        Phishing Templates
+      </div>
+      <div class="card-body text-center d-flex flex-column align-items-center justify-content-center">
+        <div class="fs-1 fw-bold text-primary mb-1">{{ total_templates }}</div>
+        <div class="text-muted small mb-3">templates created</div>
+        <a href="{{ url_for('admin.templates') }}" class="btn btn-outline-primary btn-sm me-2">View all</a>
+        <a href="{{ url_for('admin.template_create') }}" class="btn btn-primary btn-sm">+ New</a>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Recent scans + recent feedback -->
+<div class="row g-3">
+  <div class="col-lg-7">
+    <div class="card">
+      <div class="card-header d-flex align-items-center justify-content-between">
+        <span class="d-flex align-items-center gap-2">
+          <i class="bi bi-clock-history text-primary"></i>Recent Scans
+        </span>
+        <a href="{{ url_for('admin.scans') }}" class="btn btn-sm btn-outline-secondary">View all</a>
+      </div>
+      <div class="card-body p-0">
+        {% if recent_scans %}
+        <div class="table-responsive">
+          <table class="table table-hover align-middle mb-0">
+            <thead class="table-light">
+              <tr>
+                <th class="ps-3">URL</th>
+                <th>Risk</th>
+                <th>User</th>
+                <th>Date</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for scan in recent_scans %}
+              <tr>
+                <td class="ps-3" style="max-width:200px;">
+                  <a href="{{ url_for('user.result', scan_id=scan.id) }}"
+                     class="text-truncate d-block small text-decoration-none text-dark"
+                     title="{{ scan.scanned_url }}">{{ scan.scanned_url }}</a>
+                </td>
+                <td>
+                  {% if scan.result == 'High Risk' %}<span class="badge bg-danger">High</span>
+                  {% elif scan.result == 'Medium Risk' %}<span class="badge bg-warning text-dark">Medium</span>
+                  {% else %}<span class="badge bg-success">Low</span>{% endif %}
+                </td>
+                <td class="small text-muted">{{ user_map.get(scan.user_id, '—') }}</td>
+                <td class="small text-muted text-nowrap">{{ scan.created_at.strftime('%b %d, %H:%M') }}</td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+        {% else %}
+          <div class="text-center py-4 text-muted small">No scans yet.</div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+
+  <div class="col-lg-5">
+    <div class="card">
+      <div class="card-header d-flex align-items-center justify-content-between">
+        <span class="d-flex align-items-center gap-2">
+          <i class="bi bi-chat-dots text-primary"></i>Recent Feedback
+        </span>
+        <a href="{{ url_for('admin.feedback_list') }}" class="btn btn-sm btn-outline-secondary">View all</a>
+      </div>
+      <div class="card-body p-0">
+        {% if recent_feedback %}
+          {% for fb in recent_feedback %}
+          <div class="px-3 py-3 {% if not loop.last %}border-bottom{% endif %}">
+            <div class="d-flex align-items-center justify-content-between mb-1">
+              <span class="small fw-semibold">{{ user_map.get(fb.user_id, 'Anonymous') }}</span>
+              <span class="text-warning small">
+                {% for _ in range(fb.rating) %}★{% endfor %}{% for _ in range(5 - fb.rating) %}☆{% endfor %}
+              </span>
+            </div>
+            <p class="small text-muted mb-0" style="white-space:pre-line;">{{ fb.message[:120] }}{% if fb.message|length > 120 %}…{% endif %}</p>
+          </div>
+          {% endfor %}
+        {% else %}
+          <div class="text-center py-4 text-muted small">No feedback yet.</div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

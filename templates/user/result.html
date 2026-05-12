@@ -1,0 +1,262 @@
+{% extends 'base.html' %}
+{% block title %}Scan Result — PhishGuard{% endblock %}
+
+{% block head %}
+<style>
+  /* Animated score ring */
+  .score-ring {
+    position: relative;
+    width: 160px;
+    height: 160px;
+    margin: 0 auto;
+  }
+
+  .score-ring svg {
+    transform: rotate(-90deg);
+  }
+
+  .score-ring .track {
+    fill: none;
+    stroke: #e9ecef;
+    stroke-width: 14;
+  }
+
+  .score-ring .progress-arc {
+    fill: none;
+    stroke-width: 14;
+    stroke-linecap: round;
+    transition: stroke-dashoffset 1.2s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  .score-ring .score-label {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    text-align: center;
+  }
+
+  .verdict-icon {
+    font-size: 2.5rem;
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+
+<div class="d-flex align-items-center gap-2 mb-4">
+  <a href="{{ url_for('user.scanner') }}" class="btn btn-sm btn-outline-secondary">
+    <i class="bi bi-arrow-left me-1"></i>Scan another
+  </a>
+  <a href="{{ url_for('user.history') }}" class="btn btn-sm btn-outline-secondary">
+    <i class="bi bi-clock-history me-1"></i>History
+  </a>
+</div>
+
+<div class="row g-3 justify-content-center">
+  <div class="col-lg-8">
+
+    <!-- ── Result verdict card ───────────────────────── -->
+    <div class="card shadow-sm mb-3
+      {% if scan.result == 'High Risk' %}border-danger border-2
+      {% elif scan.result == 'Medium Risk' %}border-warning border-2
+      {% else %}border-success border-2{% endif %}">
+
+      <div class="card-body p-4">
+        <div class="row align-items-center g-4">
+
+          <!-- Score ring -->
+          <div class="col-md-4 text-center">
+            <div class="score-ring">
+              <svg viewBox="0 0 160 160" width="160" height="160">
+                <circle class="track" cx="80" cy="80" r="66" />
+                <circle
+                  class="progress-arc"
+                  id="progressArc"
+                  cx="80" cy="80" r="66"
+                  stroke="
+                    {% if scan.result == 'High Risk' %}#dc3545
+                    {% elif scan.result == 'Medium Risk' %}#ffc107
+                    {% else %}#198754{% endif %}"
+                  stroke-dasharray="414.69"
+                  stroke-dashoffset="414.69"
+                />
+              </svg>
+              <div class="score-label">
+                <div class="fs-1 fw-bold lh-1
+                  {% if scan.result == 'High Risk' %}text-danger
+                  {% elif scan.result == 'Medium Risk' %}text-warning
+                  {% else %}text-success{% endif %}">
+                  {{ scan.score }}
+                </div>
+                <div class="text-muted small">/ 100</div>
+              </div>
+            </div>
+            <div class="mt-2 small text-muted">Risk Score</div>
+          </div>
+
+          <!-- Verdict text -->
+          <div class="col-md-8">
+            <div class="d-flex align-items-center gap-3 mb-3">
+              <span class="verdict-icon">
+                {% if scan.result == 'High Risk' %}
+                  <i class="bi bi-shield-x text-danger"></i>
+                {% elif scan.result == 'Medium Risk' %}
+                  <i class="bi bi-shield-exclamation text-warning"></i>
+                {% else %}
+                  <i class="bi bi-shield-check text-success"></i>
+                {% endif %}
+              </span>
+              <div>
+                <h4 class="fw-bold mb-0
+                  {% if scan.result == 'High Risk' %}text-danger
+                  {% elif scan.result == 'Medium Risk' %}text-warning
+                  {% else %}text-success{% endif %}">
+                  {{ scan.result }}
+                </h4>
+                <div class="text-muted small">
+                  Scanned {{ scan.created_at.strftime('%B %d, %Y at %H:%M') }}
+                </div>
+              </div>
+            </div>
+
+            <!-- Verdict summary -->
+            {% if scan.result == 'High Risk' %}
+              <div class="alert alert-danger py-2 small mb-3">
+                <i class="bi bi-exclamation-triangle-fill me-2"></i>
+                <strong>Warning:</strong> This URL shows multiple phishing indicators.
+                Do <strong>not</strong> visit or share it.
+              </div>
+            {% elif scan.result == 'Medium Risk' %}
+              <div class="alert alert-warning py-2 small mb-3">
+                <i class="bi bi-exclamation-circle-fill me-2"></i>
+                <strong>Caution:</strong> This URL has some suspicious traits.
+                Verify the source before clicking.
+              </div>
+            {% else %}
+              <div class="alert alert-success py-2 small mb-3">
+                <i class="bi bi-check-circle-fill me-2"></i>
+                <strong>Looks safe:</strong> No major phishing indicators were found.
+                Still, stay vigilant.
+              </div>
+            {% endif %}
+
+            <!-- Scanned URL -->
+            <div>
+              <div class="text-muted small fw-semibold mb-1">Scanned URL</div>
+              <div class="bg-light rounded p-2 small text-break font-monospace">
+                {{ scan.scanned_url }}
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </div>
+
+    <!-- ── Flags / reasons ───────────────────────────── -->
+    <div class="card mb-3">
+      <div class="card-header d-flex align-items-center gap-2">
+        <i class="bi bi-flag text-primary"></i>
+        Detection Flags
+        <span class="badge bg-secondary ms-auto">{{ reasons | length }} found</span>
+      </div>
+      <div class="card-body p-0">
+        {% if reasons %}
+        <ul class="list-group list-group-flush">
+          {% for reason in reasons %}
+          <li class="list-group-item d-flex align-items-start gap-3 py-3">
+            <span class="mt-1">
+              {% if scan.result == 'High Risk' %}
+                <i class="bi bi-x-circle-fill text-danger"></i>
+              {% elif scan.result == 'Medium Risk' %}
+                <i class="bi bi-exclamation-circle-fill text-warning"></i>
+              {% else %}
+                <i class="bi bi-info-circle-fill text-primary"></i>
+              {% endif %}
+            </span>
+            <span class="small">{{ reason }}</span>
+          </li>
+          {% endfor %}
+        </ul>
+        {% else %}
+        <div class="text-center py-4 text-muted small">
+          <i class="bi bi-check-circle fs-3 text-success d-block mb-2"></i>
+          No suspicious patterns detected.
+        </div>
+        {% endif %}
+      </div>
+    </div>
+
+    <!-- ── Score breakdown bar ───────────────────────── -->
+    <div class="card mb-3">
+      <div class="card-header d-flex align-items-center gap-2">
+        <i class="bi bi-bar-chart-line text-primary"></i>
+        Score Breakdown
+      </div>
+      <div class="card-body">
+        <div class="d-flex justify-content-between small text-muted mb-1">
+          <span>0 — Safe</span>
+          <span>50 — Moderate</span>
+          <span>100 — Dangerous</span>
+        </div>
+        <div class="progress" style="height: 20px; border-radius: 10px;">
+          <div
+            class="progress-bar progress-bar-striped
+              {% if scan.score > 60 %}bg-danger
+              {% elif scan.score > 30 %}bg-warning
+              {% else %}bg-success{% endif %}"
+            role="progressbar"
+            id="scoreBar"
+            style="width: 0%; border-radius: 10px; transition: width 1.2s ease;"
+            aria-valuenow="{{ scan.score }}"
+            aria-valuemin="0"
+            aria-valuemax="100">
+            {{ scan.score }}%
+          </div>
+        </div>
+
+        <!-- Zone markers -->
+        <div class="d-flex mt-2 small gap-3">
+          <span class="badge bg-success">Low: 0–30</span>
+          <span class="badge bg-warning text-dark">Medium: 31–60</span>
+          <span class="badge bg-danger">High: 61–100</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── Actions ───────────────────────────────────── -->
+    <div class="d-flex gap-2 flex-wrap">
+      <a href="{{ url_for('user.scanner') }}" class="btn btn-primary">
+        <i class="bi bi-search me-2"></i>Scan another URL
+      </a>
+      <a href="{{ url_for('user.history') }}" class="btn btn-outline-secondary">
+        <i class="bi bi-clock-history me-2"></i>View all scans
+      </a>
+      <a href="{{ url_for('user.dashboard') }}" class="btn btn-outline-secondary">
+        <i class="bi bi-speedometer2 me-2"></i>Dashboard
+      </a>
+    </div>
+
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+  // Animate the SVG ring
+  const arc    = document.getElementById('progressArc');
+  const score  = {{ scan.score }};
+  const circum = 414.69;
+
+  setTimeout(() => {
+    arc.style.strokeDashoffset = circum - (score / 100) * circum;
+  }, 100);
+
+  // Animate the progress bar
+  const bar = document.getElementById('scoreBar');
+  setTimeout(() => {
+    bar.style.width = score + '%';
+  }, 100);
+</script>
+{% endblock %}
