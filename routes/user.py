@@ -1,7 +1,8 @@
 from functools import wraps
 from flask import Blueprint, render_template, request, redirect, url_for, flash, session
 from models.database import db
-from models.models import User, UrlScan, Feedback
+from datetime import datetime
+from models.models import User, UrlScan, Feedback, SentEmail
 from scanner.url_scanner import analyze_url
 
 user_bp = Blueprint('user', __name__)
@@ -160,6 +161,66 @@ def profile():
     high  = UrlScan.query.filter_by(user_id=user.id, result='High Risk').count()
 
     return render_template('user/profile.html', user=user, total=total, high=high)
+
+
+# ── Inbox (simulated phishing emails from admin) ──────────────────────────────
+@user_bp.route('/inbox')
+@login_required
+def inbox():
+    uid = session['user_id']
+    emails = (
+        SentEmail.query
+        .filter_by(recipient_id=uid)
+        .order_by(SentEmail.sent_at.desc())
+        .all()
+    )
+    return render_template('user/inbox.html', emails=emails)
+
+
+@user_bp.route('/inbox/<int:email_id>')
+@login_required
+def view_email(email_id):
+    email = SentEmail.query.get_or_404(email_id)
+    if email.recipient_id != session['user_id']:
+        flash('You do not have permission to view that email.', 'danger')
+        return redirect(url_for('user.inbox'))
+
+    if email.read_at is None:
+        email.read_at = datetime.utcnow()
+        db.session.commit()
+
+    return render_template('user/view_email.html', email=email, t=email.template)
+
+
+@user_bp.route('/inbox/<int:email_id>/click')
+@login_required
+def email_click(email_id):
+    email = SentEmail.query.get_or_404(email_id)
+    if email.recipient_id != session['user_id']:
+        flash('You do not have permission to access that email.', 'danger')
+        return redirect(url_for('user.inbox'))
+
+    if email.clicked_at is None:
+        email.clicked_at = datetime.utcnow()
+        db.session.commit()
+
+    return render_template('user/email_clicked.html', email=email, t=email.template)
+
+
+@user_bp.route('/inbox/<int:email_id>/report', methods=['POST'])
+@login_required
+def email_report(email_id):
+    email = SentEmail.query.get_or_404(email_id)
+    if email.recipient_id != session['user_id']:
+        flash('You do not have permission to access that email.', 'danger')
+        return redirect(url_for('user.inbox'))
+
+    if email.reported_at is None:
+        email.reported_at = datetime.utcnow()
+        db.session.commit()
+
+    flash('Nice catch! You reported this as phishing.', 'success')
+    return redirect(url_for('user.inbox'))
 
 
 # ── Simulated phishing pages (educational — no data saved) ────────────────────

@@ -1,0 +1,54 @@
+{% extends 'base.html' %}
+{% block title %}Inbox{% endblock %}
+
+{% block content %}
+<div class="d-flex align-items-center justify-content-between mb-4 flex-wrap gap-2">
+  <div>
+    <h4 class="fw-bold mb-1"><i class="bi bi-inbox me-2 text-primary"></i>Inbox</h4>
+    <p class="text-muted small mb-0">Simulated emails from the training system. Practice spotting phishing here.</p>
+  </div>
+</div>
+
+<div class="alert alert-info small">
+  <i class="bi bi-shield-exclamation me-2"></i>
+  Every message in this inbox is a <strong>training simulation</strong>. Inspect senders, look for urgency,
+  and check URLs before clicking. Use the <strong>Report</strong> button when you spot phishing.
+</div>
+
+<div class="card">
+  <div class="list-group list-group-flush">
+    {% for e in emails %}
+      <a href="{{ url_for('user.view_email', email_id=e.id) }}"
+         class="list-group-item list-group-item-action d-flex align-items-center gap-3
+                {% if not e.read_at %}fw-semibold bg-light{% endif %}">
+        <div class="flex-shrink-0">
+          {% if e.reported_at %}
+            <i class="bi bi-flag-fill text-success fs-5"></i>
+          {% elif e.clicked_at %}
+            <i class="bi bi-exclamation-triangle-fill text-danger fs-5"></i>
+          {% elif e.read_at %}
+            <i class="bi bi-envelope-open text-muted fs-5"></i>
+          {% else %}
+            <i class="bi bi-envelope-fill text-primary fs-5"></i>
+          {% endif %}
+        </div>
+        <div class="flex-grow-1 min-w-0">
+          <div class="d-flex justify-content-between">
+            <span class="text-truncate">{{ e.template.sender_name if e.template else 'Unknown sender' }}</span>
+            <span class="text-muted small">{{ e.sent_at.strftime('%b %d, %H:%M') }}</span>
+          </div>
+          <div class="text-truncate">{{ e.template.subject if e.template else '(no subject)' }}</div>
+        </div>
+        {% if not e.read_at %}
+          <span class="badge bg-primary">New</span>
+        {% endif %}
+      </a>
+    {% else %}
+      <div class="text-center text-muted py-5">
+        <i class="bi bi-inbox display-4 d-block mb-2"></i>
+        Your inbox is empty.
+      </div>
+    {% endfor %}
+  </div>
+</div>
+{% endblock %}

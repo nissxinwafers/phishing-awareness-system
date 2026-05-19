@@ -1,7 +1,7 @@
 import os
-from flask import Flask
+from flask import Flask, session
 from models.database import db
-from models.models import User, UrlScan, PhishingTemplate, Feedback
+from models.models import User, UrlScan, PhishingTemplate, Feedback, SentEmail
 from routes.auth import auth_bp
 from routes.user import user_bp
 from routes.admin import admin_bp
@@ -30,6 +30,15 @@ db.init_app(app)
 app.register_blueprint(auth_bp)
 app.register_blueprint(user_bp)
 app.register_blueprint(admin_bp)
+
+@app.context_processor
+def inject_inbox_unread():
+    uid = session.get('user_id')
+    if not uid:
+        return {'inbox_unread_count': 0}
+    count = SentEmail.query.filter_by(recipient_id=uid, read_at=None).count()
+    return {'inbox_unread_count': count}
+
 
 # Create all tables on first run
 with app.app_context():

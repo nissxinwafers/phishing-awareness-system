@@ -1,0 +1,142 @@
+{% extends 'base.html' %}
+{% block title %}{{ t.subject }}{% endblock %}
+
+{% block head %}
+<style>
+  .email-client {
+    border: 1px solid #dee2e6;
+    border-radius: 0.75rem;
+    overflow: hidden;
+    font-family: 'Segoe UI', Arial, sans-serif;
+    background: #fff;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.06);
+  }
+  .email-toolbar {
+    background: #f8f9fa;
+    border-bottom: 1px solid #dee2e6;
+    padding: 0.6rem 1rem;
+    display: flex; align-items: center; gap: 0.5rem;
+  }
+  .email-toolbar-dot { width: 12px; height: 12px; border-radius: 50%; }
+
+  .email-header-row {
+    display: flex; padding: 0.5rem 1.5rem; font-size: 0.88rem;
+    border-bottom: 1px solid #f0f0f0; align-items: baseline; gap: 0.5rem;
+  }
+  .email-header-label { color: #6c757d; min-width: 60px; font-size: 0.8rem; }
+
+  .email-subject-bar {
+    padding: 0.9rem 1.5rem; border-bottom: 1px solid #dee2e6; background: #fff;
+  }
+  .email-subject-bar h5 { font-size: 1.05rem; font-weight: 700; margin: 0; }
+
+  .email-body {
+    padding: 1.75rem 1.5rem; font-size: 0.95rem; line-height: 1.7;
+    min-height: 200px; white-space: pre-wrap; color: #212529;
+  }
+  .email-fake-link {
+    display: inline-block; margin: 1rem 0;
+    background: #0d6efd; color: #fff !important;
+    padding: 0.6rem 1.4rem; border-radius: 0.3rem;
+    text-decoration: none !important; font-weight: 600; font-size: 0.95rem;
+  }
+  .email-fake-link:hover { background: #0b5ed7; color: #fff !important; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="d-flex align-items-center gap-2 mb-4 flex-wrap">
+  <a href="{{ url_for('user.inbox') }}" class="btn btn-sm btn-outline-secondary">
+    <i class="bi bi-arrow-left me-1"></i>Back to Inbox
+  </a>
+  {% if not email.reported_at %}
+    <form action="{{ url_for('user.email_report', email_id=email.id) }}" method="POST" class="ms-auto m-0">
+      <button type="submit" class="btn btn-sm btn-success">
+        <i class="bi bi-flag-fill me-1"></i>Report as Phishing
+      </button>
+    </form>
+  {% else %}
+    <span class="ms-auto badge bg-success p-2">
+      <i class="bi bi-check-circle-fill me-1"></i>You reported this as phishing
+    </span>
+  {% endif %}
+</div>
+
+<div class="row g-3">
+  <div class="col-lg-8">
+    <div class="email-client">
+      <div class="email-toolbar">
+        <div class="email-toolbar-dot" style="background:#ff5f57;"></div>
+        <div class="email-toolbar-dot" style="background:#febc2e;"></div>
+        <div class="email-toolbar-dot" style="background:#28c840;"></div>
+        <span class="ms-3 text-muted small">Your Inbox</span>
+      </div>
+
+      <div class="email-header-row">
+        <span class="email-header-label">From</span>
+        <div>
+          <strong>{{ t.sender_name }}</strong>
+          <span class="text-muted ms-1 small">&lt;security@{{ t.sender_name | lower | replace(' ','-') }}-alert.com&gt;</span>
+        </div>
+      </div>
+      <div class="email-header-row">
+        <span class="email-header-label">To</span>
+        <span>{{ session.user_name }}</span>
+      </div>
+      <div class="email-header-row">
+        <span class="email-header-label">Date</span>
+        <span class="text-muted">{{ email.sent_at.strftime('%A, %B %d, %Y at %I:%M %p') }}</span>
+      </div>
+
+      <div class="email-subject-bar">
+        <h5>{{ t.subject }}</h5>
+      </div>
+
+      <div class="email-body">{{ t.body }}
+{% if t.fake_url %}
+
+<a href="{{ url_for('user.email_click', email_id=email.id) }}" class="email-fake-link">
+  Click Here to Verify Your Account →
+</a>
+{% endif %}
+      </div>
+    </div>
+  </div>
+
+  <div class="col-lg-4 d-flex flex-column gap-3">
+    {% if t.fake_url %}
+    <div class="card border-warning">
+      <div class="card-header d-flex align-items-center gap-2 text-warning">
+        <i class="bi bi-link-45deg"></i> Link in this email
+      </div>
+      <div class="card-body">
+        <p class="small text-muted mb-2">Before you click, check where the link actually goes:</p>
+        <div class="bg-light p-2 rounded font-monospace small text-break mb-3">
+          {{ t.fake_url }}
+        </div>
+        <form method="POST" action="{{ url_for('user.scanner') }}">
+          <input type="hidden" name="url" value="{{ t.fake_url }}">
+          <button type="submit" class="btn btn-primary btn-sm w-100">
+            <i class="bi bi-search me-1"></i>Scan This URL
+          </button>
+        </form>
+      </div>
+    </div>
+    {% endif %}
+
+    <div class="card">
+      <div class="card-header d-flex align-items-center gap-2">
+        <i class="bi bi-lightbulb text-warning"></i> Tips
+      </div>
+      <div class="card-body small">
+        <ul class="mb-0 ps-3">
+          <li>Check the sender domain carefully.</li>
+          <li>Watch for urgency or threats.</li>
+          <li>Hover (or scan) links before clicking.</li>
+          <li>Real companies don't ask for credentials by email.</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

@@ -229,6 +229,14 @@
        class="sidebar-link {% if request.endpoint == 'user.scanner' %}active{% endif %}">
       <i class="bi bi-search"></i> URL Scanner
     </a>
+    <a href="{{ url_for('user.inbox') }}"
+       class="sidebar-link {% if request.endpoint in ['user.inbox', 'user.view_email'] %}active{% endif %}">
+      <i class="bi bi-inbox"></i> Inbox
+      {% set unread = inbox_unread_count %}
+      {% if unread and unread > 0 %}
+        <span class="badge bg-danger ms-auto">{{ unread }}</span>
+      {% endif %}
+    </a>
     <a href="{{ url_for('user.history') }}"
        class="sidebar-link {% if request.endpoint == 'user.history' %}active{% endif %}">
       <i class="bi bi-clock-history"></i> Scan History
@@ -248,6 +256,10 @@
     <a href="{{ url_for('admin.templates') }}"
        class="sidebar-link {% if request.endpoint == 'admin.templates' %}active{% endif %}">
       <i class="bi bi-envelope-paper"></i> Phishing Templates
+    </a>
+    <a href="{{ url_for('admin.sent_emails') }}"
+       class="sidebar-link {% if request.endpoint == 'admin.sent_emails' %}active{% endif %}">
+      <i class="bi bi-send"></i> Sent Emails
     </a>
     <a href="{{ url_for('admin.users') }}"
        class="sidebar-link {% if request.endpoint == 'admin.users' %}active{% endif %}">

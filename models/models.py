@@ -33,6 +33,21 @@ class PhishingTemplate(db.Model):
     fake_url = db.Column(db.String(500))
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
+# SentEmail table — phishing emails admin sent to users (simulation only)
+class SentEmail(db.Model):
+    __tablename__ = 'sent_emails'
+    id = db.Column(db.Integer, primary_key=True)
+    template_id = db.Column(db.Integer, db.ForeignKey('phishing_templates.id'), nullable=False)
+    recipient_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+    sent_at = db.Column(db.DateTime, default=datetime.utcnow)
+    read_at = db.Column(db.DateTime, nullable=True)
+    clicked_at = db.Column(db.DateTime, nullable=True)
+    reported_at = db.Column(db.DateTime, nullable=True)
+
+    template = db.relationship('PhishingTemplate', backref='sent_emails')
+    recipient = db.relationship('User', backref='received_emails')
+
+
 # Feedback table — stores user ratings and comments
 class Feedback(db.Model):
     __tablename__ = 'feedback'

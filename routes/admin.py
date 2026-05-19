@@ -1,7 +1,7 @@
 from functools import wraps
 from flask import Blueprint, render_template, request, redirect, url_for, flash, session
 from models.database import db
-from models.models import User, UrlScan, PhishingTemplate, Feedback
+from models.models import User, UrlScan, PhishingTemplate, Feedback, SentEmail
 
 admin_bp = Blueprint('admin', __name__, url_prefix='/admin')
 
@@ -194,6 +194,49 @@ def feedback_list():
         fb_page=fb_page,
         user_map=user_map,
     )
+
+# ── Phishing templates — send to user (simulation, not real email) ────────────
+@admin_bp.route('/templates/<int:template_id>/send', methods=['GET', 'POST'])
+@admin_required
+def template_send(template_id):
+    t = PhishingTemplate.query.get_or_404(template_id)
+
+    if request.method == 'POST':
+        recipient_ids = request.form.getlist('recipient_ids')
+
+        if not recipient_ids:
+            flash('Pick at least one recipient.', 'warning')
+            users = User.query.filter_by(role='user').order_by(User.name).all()
+            return render_template('admin/template_send.html', t=t, users=users)
+
+        count = 0
+        for rid in recipient_ids:
+            user = User.query.get(int(rid))
+            if user:
+                sent = SentEmail(template_id=t.id, recipient_id=user.id)
+                db.session.add(sent)
+                count += 1
+        db.session.commit()
+
+        flash(f'Simulated email sent to {count} user(s).', 'success')
+        return redirect(url_for('admin.sent_emails'))
+
+    users = User.query.filter_by(role='user').order_by(User.name).all()
+    return render_template('admin/template_send.html', t=t, users=users)
+
+
+# ── Sent emails — tracking dashboard ──────────────────────────────────────────
+@admin_bp.route('/sent-emails')
+@admin_required
+def sent_emails():
+    page = request.args.get('page', 1, type=int)
+    sent_page = (
+        SentEmail.query
+        .order_by(SentEmail.sent_at.desc())
+        .paginate(page=page, per_page=15, error_out=False)
+    )
+    return render_template('admin/sent_emails.html', sent_page=sent_page)
+
 
 @admin_bp.route('/setup')
 def setup():
